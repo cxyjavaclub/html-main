@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+<div id="app">
+
+</div>
+<script src="js/test.js"></script>
+<script src="js/vue.js"></script>
+<script>
+    let vue = new Vue({
+        el: '#app',
+        data: {
+            aa: 11,
+            bb: 456,
+            '12': 789
+        }
+    })
+    let arr = []
+    arr.__proto__.push = function(...num){
+        console.log(123456)
+        for(let i = 0; i < num.length; i++) {
+            this[this.length] = num[i];
+        }
+    };
+    console.log(arr);
+</script>
+</body>
+</html>

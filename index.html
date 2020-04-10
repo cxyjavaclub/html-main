@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>轮播图设计改进</title>
+</head>
+<body>
+
+<div id="app">
+    <h1>{{getStr()}}abc</h1>
+    <h1>{{123 + 456}}abc</h1>
+<!--    <h1 ref="h1" m-attr:aa="aa" m-js:click="swiperH1Click" m-attr:style="{fontSize: '45px'}">我是{{789}}h1app</h1>-->
+<!--    <img m-attr:src="imgUrl"/>-->
+<!--    <button m-js:click="buttonClick">按钮</button>-->
+
+<!--    <swiper m-attr:aa="456" m-js:click="swiperH1Click">-->
+<!--        <div>123</div>-->
+<!--        <h1>456</h1>-->
+<!--        <div m-slot:div="num" m-for="v in 2">-->
+
+<!--            abc-->
+<!--        </div>-->
+<!--        <p>789</p>-->
+<!--        <h3 m-slot:new m-for="v in 10">{{v}}我是new</h3>-->
+<!--    </swiper>-->
+<!--    <global m-else></global>-->
+
+
+<!--    <p m-if="true" m-attr:aa = '456'>4545</p>-->
+<!--    <p m-else>789</p>-->
+<!--    <swiper>-->
+<!--        <div m-for="value of 5">-->
+<!--            <p>{{value}}</p>-->
+<!--            <p >12121</p>-->
+<!--            <span></span>-->
+<!--            我是第一个swiper div1-->
+<!--        </div>-->
+<!--        <div m-slot:div="num" m-for="value in 2">-->
+<!--            {{num.time}}-->
+<!--            {{value}}-->
+<!--            我是第一个swiper div 加m-slot:div-->
+<!--        </div>-->
+<!--    </swiper>-->
+<!--    <div>-->
+<!--        <div>-->
+<!--            <div>-->
+<!--                <swiper></swiper>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+
+<!--    <swiper width="100px"  style="width: 800px;" m-js:cc="bbb">-->
+<!--        <div>我是第二个swiper div</div>-->
+<!--        <p>我是第二个swiper p</p>-->
+<!--    </swiper>-->
+</div>
+
+<!--<div id="app1">-->
+<!--    <h1>我是app1</h1>-->
+<!--    <global></global>-->
+<!--</div>-->
+
+<!--<div id="app2">-->
+<!--    1212{{aa}}78-->
+<!--</div>-->
+<script src="module/swiper.js"></script>
+<script src="js/main.js"></script>
+<script>
+    //注册全局组件
+    Main.component({
+        name: 'global',
+        template: `
+                    <div class="global">
+                        我是global
+                     </div>
+                `,
+    });
+    let map = new Map();
+    map.set('c', 'cc');
+    map.set('dd', 'aa');
+
+    //m-if 对应 js if
+    //m-elif 对应 js else if
+    //m-else 对应 js  else
+
+    // eval('console.log(123 + 456 + aa)')
+
+    let main = new Main({
+        el: '#app',
+        data: {
+            flag: true,
+            aa: 123,
+            time: 800,
+            imgUrl: 'img/1.jpg',
+            map: map,
+            item: 345,
+            classNames:[12, 45],
+            obj: {
+                cc: {
+                    aa: 44
+                }
+            },
+            '11': 456,
+            num: [1,2],
+            alert: 123
+        },
+        components: {
+            swiper: swiper,
+            cc:{
+                name: 'cc',
+                style: {
+                    scoped: true, //局部css样式
+                    value: `
+                .aa{ }   .cc    {
+                    color: blue;
+                }
+            ` //样式内容
+                },
+                template: `
+                    <div class="cc">
+                        <dd></dd>
+                        我是main的cc
+                     </div>
+                `,
+                components:{
+                    dd: {
+                        name: 'dd',
+                        style: {
+                            scoped: true, //局部css样式
+                            value: `
+                            .dd{
+                                color: red;
+                            }
+
+            ` //样式内容
+                        },
+                        template: `
+                               <div class="dd">
+                               <global></global>
+                                我是dd
+                               </div>
+                          `,
+                    }
+                }
+            }
+        },
+        methods:{
+            aaa: function (a, b, c) {
+                console.log(this);
+                console.log(a);
+                console.log(b);
+                console.log(c);
+                console.log('aaa');
+            },
+            getString: function () {
+                return '<h1>我是函数返回的值</h1>';
+            },
+            swiperH1Click: function () {
+                console.log('swiperH1被单击')
+            },
+            buttonClick: function () {
+                // this.style = {color: 'red', fontSize: '50px'};
+                this.imgUrl = 'http://gtd.alicdn.com/tfscom/TB1OySRSHrpK1RjSZTEwu3WAVXa';
+            },
+            getTest: function () {
+                console.log(this)
+                return this.aa + this.imgUrl + this.el;
+            },
+            refTest: function () {
+                this.$refs.h1[0].style.color = 'red';
+            },
+            getStr: function () {
+                return this.aa + this.imgUrl;
+            }
+        }
+    });
+
+    // console.log(main.data.classNames[0])
+
+
+    // setTimeout(function () {
+    //     main.style = {color: 'red', fontSize: '50px'}
+    //     main.imgUrl = 'http://gtd.alicdn.com/tfscom/TB1OySRSHrpK1RjSZTEwu3WAVXa';
+    // }, 5000)
+
+
+    // let main1 = new Main({
+    //     el: '#app1',
+    //     components: {
+    //         cc: {
+    //             name: 'cc',
+    //             template: `
+    //                 <div class="cc">
+    //                     我是main1的cc
+    //                  </div>
+    //             `
+    //         }
+    //     },
+    // });
+
+
+</script>
+</body>
+</html>
