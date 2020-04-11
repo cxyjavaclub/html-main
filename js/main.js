@@ -432,7 +432,6 @@
                                 let text = c.textContent;
                                 let that = this;
                                 this.depNamesDispose(function (object, key, parameterObj) {
-                                    console.log(parameterObj);
                                     new Subscriber(object, key, function () {
                                         c.textContent = text.replace(e[0], that.parseFrameString(parameterObj, e[1]));
                                     })
