@@ -7,23 +7,19 @@
 <body>
 
 <div id="app">
-    <h1>{{getStr()}}abc</h1>
-    <h1>{{123 + 456}}abc</h1>
+    <h1 m-attr:class="{aa: flag}" class="bb cc" m-attr:aa="obj" m-attr:style="s" style="font-size: 50px;">123</h1>
+<!--    <h1>{{123 + 456}}abc</h1>-->
 <!--    <h1 ref="h1" m-attr:aa="aa" m-js:click="swiperH1Click" m-attr:style="{fontSize: '45px'}">我是{{789}}h1app</h1>-->
 <!--    <img m-attr:src="imgUrl"/>-->
 <!--    <button m-js:click="buttonClick">按钮</button>-->
 
-<!--    <swiper m-attr:aa="456" m-js:click="swiperH1Click">-->
-<!--        <div>123</div>-->
-<!--        <h1>456</h1>-->
-<!--        <div m-slot:div="num" m-for="v in 2">-->
-
-<!--            abc-->
-<!--        </div>-->
-<!--        <p>789</p>-->
-<!--        <h3 m-slot:new m-for="v in 10">{{v}}我是new</h3>-->
-<!--    </swiper>-->
-<!--    <global m-else></global>-->
+    <swiper m-attr:aa="aa" cc="123" m-js:click="swiperH1Click">
+        <div m-slot:div="num" m-text="num">
+            {{num}}
+            abc
+        </div>
+    </swiper>
+    <global m-else></global>
 
 
 <!--    <p m-if="true" m-attr:aa = '456'>4545</p>-->
@@ -96,13 +92,15 @@
             item: 345,
             classNames:[12, 45],
             obj: {
+                color: 'red',
                 cc: {
-                    aa: 44
+                    aa: '<h1>aa</h1>'
                 }
             },
             '11': 456,
             num: [1,2],
-            alert: 123
+            alert: 123,
+            s: {color: 'red', backgroundColor: 'red'}
         },
         components: {
             swiper: swiper,
@@ -168,10 +166,20 @@
             },
             refTest: function () {
                 this.$refs.h1[0].style.color = 'red';
-            },
-            getStr: function () {
-                return this.aa + this.imgUrl;
             }
+        },
+        computes:{
+            getStr: {
+                get: function () {
+                    return this.imgUrl + this.aa + this.obj.cc.aa;
+                },
+                set: function (value) {
+                    return value;
+                }
+            }
+            // getStr: function () {
+            //     return this.imgUrl + this.aa + this.obj.cc.aa;
+            // }
         }
     });
 

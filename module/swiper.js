@@ -48,7 +48,7 @@
                         <h2>默认插槽</h2>
                      </slot>                                                                                                                                                                                                                                                                                       
 <!--                    <img m-js:click="setColor" ref="swiper-img" src="img/2.jpg">                        -->
-                    <slot name="div" m-attr:num="age.time">
+                    <slot name="div" m-attr:num="index">
                         <h2>div插槽</h2>
                    </slot>  
                  
@@ -65,9 +65,12 @@
             e:{
                 type: Object
             },
-            time:{
+            time: {
                 type: Function
-            }
+            },
+            cc: {
+                type: String
+            },
         },
         //数据
         data:{
@@ -113,6 +116,7 @@
             },
             h1Click: function () {
                 console.log('swiper h1被点击');
+                this.age.time = '我是一个新值'
                 this.$emit('click');
             }
         }

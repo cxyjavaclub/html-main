@@ -36,9 +36,11 @@
         this.fun = fun;
         //添加到订阅器
         this.get = function () {
+            Dep.objValue = data;
             Dep.value = this;
             let value = data[name];
             Dep.value = null;
+            Dep.objValue = null;
             return value;
         }
         this.run = function () {
@@ -81,6 +83,9 @@
 
         //存储插槽对象
         $slots: {},
+
+        //计算属性
+        computes:{},
 
         //发送事件函数
         $emit: function (name, ...arr) {
@@ -146,6 +151,7 @@
 
                 //组件重置
                 this.resetComponentObj(newCom);
+
                 //解析组件m-if
                 let mIfFlag = this.parseComponentMIF(newCom);
                 //解析所有的类型标签
@@ -888,11 +894,12 @@
              * @param fun
              * @param addObjData
              */
-            depNamesDispose: function (fun, addObjData) {
+            depNamesDispose: function (fun, ...addObjData) {
                 let names = this.getDepNames();
                 let arr = [];
                 let arr1 = [];
                 if(names.length > 1) {
+                    console.log(names)
                     if (names.length > 2) {
                         for (let i = names.length - 2; i > 1; i -= 2) {
                             if (names[i] === names[i - 2][names[i - 1]]) {
@@ -905,11 +912,15 @@
                         }
                     }
                     arr1.push(names[0], names[1]);
-                    if(addObjData && addObjData.constructor === Object){
-                        Object.keys(addObjData).forEach(function (key) {
-                            arr1.push(addObjData);
-                            arr1.push(key);
-                        })
+                    if(addObjData){
+                        for(const a of addObjData) {
+                            if(a) {
+                                Object.keys(a).forEach(function (key) {
+                                    arr1.push(a);
+                                    arr1.push(key);
+                                })
+                            }
+                        }
                     }
                     let parameterObj = {};
                     for(let i = 0; i < arr1.length; i += 2){
@@ -1067,6 +1078,10 @@
                         }
                     }
                 }
+                this.resetComponentComputes(storageObj);
+                for (const [name] of Object.entries(storageObj.computes)) {
+                    this.resetComponentKeys(storageObj, 'computes', name);
+                }
             },
 
             /**
@@ -1078,16 +1093,11 @@
             dataHijack: function (obj, name, value) {
                 this.observe(value);
                 let dep = new Dep();
+                let that = this;
                 Object.defineProperty(obj, name, {
                     configurable: true,
                     get: function () {
-                        if (Dep.value) {
-                            dep.addSub(Dep.value);
-                        }
-                        if (Dep.names) {
-                            Dep.names.push(obj)
-                            Dep.names.push(name)
-                        }
+                        that.depIndirectDispose(dep, obj, name);
                         return value;
                     },
                     set: function (v) {
@@ -1109,6 +1119,83 @@
                 Object.keys(obj).forEach(function (key) {
                     that.dataHijack(obj, key, obj[key]);
                 })
+            },
+
+            /**
+             * 处理组件的计算属性
+             * @param comObj
+             */
+            resetComponentComputes:  function (comObj) {
+                let computes = comObj.computes;
+                comObj.computes = {};
+                let that = this;
+                Object.keys(computes).forEach(function (key) {
+                    that.computesDataHijack(comObj.computes, key, computes[key], comObj);
+                })
+            },
+
+            /**
+             * dep间接处理
+             * @param dep
+             */
+            depIndirectDispose: function (dep, obj, name) {
+                if (Dep.objValue === obj) {
+                    dep.addSub(Dep.value);
+                }
+                if (Dep.names) {
+                    Dep.names.push(obj)
+                    Dep.names.push(name)
+                }
+            },
+
+            /**
+             * 计算属性数据劫持
+             * @param obj
+             * @param name
+             * @param value
+             * @param comObj
+             */
+            computesDataHijack: function(obj, name, value, comObj){
+                let constructor = value.constructor;
+                let dep = new Dep();
+                let that = this;
+                if(constructor === Function){
+                    Object.defineProperty(obj, name, {
+                        enumerable: true,
+                        configurable: true,
+                        get: function () {
+                            that.depIndirectDispose(dep, obj, name);
+                            return value.call(comObj);
+                        }
+                    });
+                }else if(constructor === Object){
+                    let obj1 = {
+                        enumerable: true,
+                        configurable: true
+                    };
+                    if(value.get){
+                        obj1.get = function () {
+                            let get = value.get;
+                            that.depIndirectDispose(dep, obj, name);
+                            if(get && get.constructor === Function){
+                                return value.get.call(comObj);
+                            }else if(value.constructor === Function){
+                                return value.call(comObj);
+                            }
+                            return value;
+                        }
+                    }
+                    if(value.set){
+                        if(value.set.constructor === Function){
+                            let set = value.set;
+                            obj1.set = function (newVal) {
+                                value = set.call(comObj, newVal);
+                                dep.runAll();
+                            }
+                        }
+                    }
+                    Object.defineProperty(obj, name, obj1);
+                }
             },
 
             /**
@@ -1521,6 +1608,12 @@
                 let obj = this.searchAttrM(attr, /m-text/, 1);
                 if (obj.flag) {
                     let runValue = this.parseFrameString(comObj, obj.value);
+                    let that = this;
+                    this.depNamesDispose(function (object, key, parameterObj) {
+                        new Subscriber(object, key, function () {
+                            dom.innerHTML = that.parseFrameString(parameterObj, obj.value);
+                        })
+                    }, comObj.parseAddObjData);
                     dom.innerHTML = runValue;
                     //删除属性
                     dom.removeAttribute(attr.name);
@@ -1570,15 +1663,15 @@
                 this.parseAttrMAttr(attr, function (obj) {
                     //得到m-attr解析值
                     let runObj = this.parseFrameString(comObj, obj.value);
+                    //特殊属性处理
                     let that = this;
                     this.depNamesDispose(function (object, key) {
                         new Subscriber(object, key, function () {
-                            console.log(key);
-                            let value = that.parseSpecialMAttrString(obj.incidentName, dom, that.parseFrameString(comObj, obj.value));
+                            let value = that.parseSpecialMAttrString(obj.incidentName, dom, that.parseFrameString(comObj, obj.value), runObj);
+                            runObj = value;
                             that.addDomAttr(dom, obj.incidentName, value);
                         })
                     })
-                    //特殊属性处理
                     runObj = this.parseSpecialMAttrString(obj.incidentName, dom, runObj);
                     //添加dom属性
                     this.addDomAttr(dom, obj.incidentName, runObj);
@@ -1595,7 +1688,8 @@
             parseComponentLabelMAttr: function (attr, comObj, childComObj) {
                 this.parseAttrMAttr(attr, function (obj) {
                     //得到m-attr解析值
-                    let runObj = this.parseFrameString(comObj, obj.value, true);
+                    let runObj = this.parseFrameString(comObj, obj.value);
+
                     //添加解析组件标签属性
                     this.addComponentLabelAttr(obj.incidentName, runObj, childComObj);
                 }, this);
@@ -1612,6 +1706,9 @@
                 if (!flag) {
                     //特殊属性处理
                     runValue = this.parseSpecialMAttrString(name, comObj.elDom, runValue);
+                    let t = this.getDepNames();
+                    console.log(t);
+                    console.log(name);
                     //添加dom属性
                     this.addDomAttr(comObj.elDom, name, runValue)
                 }
@@ -1640,14 +1737,74 @@
              * @param dom
              * @param attrValue
              */
-            parseSpecialMAttrString: function (name, dom, attrValue) {
+            parseSpecialMAttrString: function (name, dom, attrValue, deleteAttr) {
                 if (name === 'class') {
                     attrValue = this.parseClassMAttrString(dom, attrValue);
+                    dom.className = this.parseSpecialDeleteMAttrString(name, dom.className, deleteAttr)
                 } else if (name === 'style') {
                     attrValue = this.parseStyleMAttrString(dom, attrValue);
+                    dom.style.cssText = this.parseSpecialDeleteMAttrString(name, dom.style.cssText, deleteAttr)
                 }
                 return attrValue;
             },
+
+            /**
+             * 特殊属性删除处理
+             * @param name
+             * @param attrValue
+             * @param deleteAttr
+             */
+            parseSpecialDeleteMAttrString: function(name, attrValue, deleteAttr){
+                let attrArr;
+                let deleteArr;
+                let str = ' ';
+                let sp = '';
+                if(!deleteAttr){
+                    return attrValue;
+                }
+                if (name === 'class') {
+                    sp = ' ';
+
+                } else if (name === 'style') {
+                    sp = ';';
+                }
+                if(name === 'class' || name === 'style') {
+                    attrArr = this.splitString(attrValue, sp);
+                    deleteArr = this.splitString(deleteAttr, sp);
+                    for (let d of deleteArr) {
+                        for (let i = 0; i < attrArr.length; i++) {
+                            if (d === attrArr[i]) {
+                                attrArr.splice(i, 1);
+                                break;
+                            }
+                        }
+                    }
+                    for(let a of attrArr){
+                        str += a + sp;
+                    }
+                }
+                return str.substring(0, str.length - 1);
+            },
+
+            /**
+             * 切割字符串
+             * @param str
+             * @param sp
+             */
+            splitString: function (str, sp) {
+                let arr = [];
+                if(str) {
+                    let arrStr = str.split(sp);
+                    for (let s of arrStr) {
+                        s = s.trim();
+                        if (s) {
+                            arr.push(s);
+                        }
+                    }
+                }
+                return arr;
+            },
+
             /**
              * 解析class m-attr字符串
              * @param dom  dom元素
@@ -1704,25 +1861,23 @@
              * @param value 获取的值
              * @param flag 是否运行函数 真：运行
              */
-            parseFrameString: function (comObj, value, flag) {
-                value = this.disposeMAttrString(comObj, value, flag);
+            parseFrameString: function (comObj, value) {
+                value = this.disposeMAttrString(comObj, value);
                 return value;
             },
             /**
              * 处理m-attr字符串
              * @param comObj 组件对象
              * @param mAttrValue m-attr的值
-             * @param flag 是否运行函数 真：运行
              */
-            disposeMAttrString: function (obj, value, flag) {
+            disposeMAttrString: function (obj, value) {
                 let newObj = obj;
                 //唯一变量名
                 let uuid = '_m' + this.getUUid(16);
                 let str1 = `let ${uuid} = null;`;
                 let str2 = `${uuid} = ${value};`;
-                let str3 = flag ? '' : `if(${uuid} && ${uuid}.constructor === Function){return ${uuid}();}`;
-                let str4 = `return ${uuid};`;
-                let runStr = str1 + str2 + str3 + str4;
+                let str3 = `return ${uuid};`;
+                let runStr = str1 + str2 + str3;
                 let result;
                 try{
                     Dep.names = [];
@@ -1908,22 +2063,6 @@
             componentPropsTypeDetection: function (value, name, prop, comObj) {
                 if (value) {
                     let type = prop.type;
-                    if (type) {
-                        switch (type) {
-                            case Number:
-                            case String:
-                            case Boolean:
-                                let v = new type(value).valueOf();
-                                value = v;
-                        }
-                        if (value.constructor === type) {
-                            if (value.constructor === Number && isNaN(value)) {
-                                console.error(`${name}：值为NaN`);
-                            }
-                        } else {
-                            console.error(`${name}：类型错误`);
-                        }
-                    }
                 } else {
                     console.error(`${name}：值为空`);
                 }
@@ -1931,7 +2070,8 @@
             },
             /**
              * 解析组件标签的常规属性
-             * @param a
+             * @param attr
+             * @param comObj
              */
             parseComponentLabelRoutine: function (attr, comObj) {
                 let name = attr.name;
