@@ -39,7 +39,7 @@
             }
         },
         template: `
-                <div>
+                <div style="border: 10px solid navajowhite">
                 <slot name="">
                 
 </slot>
@@ -55,7 +55,7 @@
                     <slot name="new">
                         <h2>new插槽</h2>
                     </slot>   
-                    <h1 m-js:click="h1Click">我是swiperH1</h1>
+                    <h1 m-js:click="h1Click" m-attr:aa="cc">我是swiperH1</h1>
                 </div>
             `, //组件模板（html）
         props:{
@@ -66,7 +66,8 @@
                 type: Object
             },
             time: {
-                type: Function
+                type: Function,
+                default: 123
             },
             cc: {
                 type: String

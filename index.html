@@ -7,13 +7,13 @@
 <body>
 
 <div id="app">
-    <h1 m-attr:class="{aa: flag}" class="bb cc" m-attr:aa="obj" m-attr:style="s" style="font-size: 50px;">123</h1>
+    <h1 m-attr:class="{aa: flag}" class="bb cc" m-attr:aa="aa" m-attr:style="s" style="font-size: 50px;">123</h1>
 <!--    <h1>{{123 + 456}}abc</h1>-->
 <!--    <h1 ref="h1" m-attr:aa="aa" m-js:click="swiperH1Click" m-attr:style="{fontSize: '45px'}">我是{{789}}h1app</h1>-->
 <!--    <img m-attr:src="imgUrl"/>-->
 <!--    <button m-js:click="buttonClick">按钮</button>-->
 
-    <swiper m-attr:aa="aa" cc="123" m-js:click="swiperH1Click">
+    <swiper m-attr:aa="getStr" time="3200" m-attr:style="s" m-attr:cc="aa" m-js:click="swiperH1Click">
         <div m-slot:div="num" m-text="num">
             {{num}}
             abc

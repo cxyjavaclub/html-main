@@ -290,8 +290,6 @@
                 let mIfFlag = this.parseComponentMIF(copyCom);
 
                 if (mIfFlag) {
-                    //解析所有的类型标签
-                    this.parseAllTypeLabel(copyCom.elDom, copyCom);
 
                     //添加组件父组件
                     this.addComponentParent(copyCom, parentCom);
@@ -299,11 +297,14 @@
                     //添加组件原始dom
                     this.addComponentOriginalDom(copyCom, comLabel);
 
+                    //格式组件的props
+                    this.formatComponentProps(copyCom);
+
                     //解析组件标签的属性
                     this.parseComponentLabelAttr(comLabel, parentCom, copyCom);
 
-                    //解析组件标签的内容
-                    this.parseComponentLabelContent(comLabel, parentCom, copyCom);
+                    //解析所有的类型标签
+                    this.parseAllTypeLabel(copyCom.elDom, copyCom);
 
                     //引入组件样式
                     this.importComponentStyle(parentCom, copyCom);
@@ -471,15 +472,6 @@
                 }
             },
 
-            /**
-             * 解析组件标签的内容 主要解析m-if 和 m-for
-             * @param labelDom 标签dom元素
-             * @param comObj   组件对象
-             * @param childComObj 子组件对象
-             */
-            parseComponentLabelContent: function (comLabel, parentCom, copyCom) {
-
-            },
 
 
             /**
@@ -899,7 +891,7 @@
                 let arr = [];
                 let arr1 = [];
                 if(names.length > 1) {
-                    console.log(names)
+                    // console.log(names)
                     if (names.length > 2) {
                         for (let i = names.length - 2; i > 1; i -= 2) {
                             if (names[i] === names[i - 2][names[i - 1]]) {
@@ -1139,7 +1131,7 @@
              * @param dep
              */
             depIndirectDispose: function (dep, obj, name) {
-                if (Dep.objValue === obj) {
+                if (Dep.objValue === obj && dep) {
                     dep.addSub(Dep.value);
                 }
                 if (Dep.names) {
@@ -1665,12 +1657,12 @@
                     let runObj = this.parseFrameString(comObj, obj.value);
                     //特殊属性处理
                     let that = this;
-                    this.depNamesDispose(function (object, key) {
+                    this.depNamesDispose(function (object, key, parameterObj) {
                         new Subscriber(object, key, function () {
-                            let value = that.parseSpecialMAttrString(obj.incidentName, dom, that.parseFrameString(comObj, obj.value), runObj);
+                            let value = that.parseSpecialMAttrString(obj.incidentName, dom, that.parseFrameString(parameterObj, obj.value), runObj);
                             runObj = value;
                             that.addDomAttr(dom, obj.incidentName, value);
-                        })
+                        }, comObj.parseAddObjData)
                     })
                     runObj = this.parseSpecialMAttrString(obj.incidentName, dom, runObj);
                     //添加dom属性
@@ -1688,29 +1680,41 @@
             parseComponentLabelMAttr: function (attr, comObj, childComObj) {
                 this.parseAttrMAttr(attr, function (obj) {
                     //得到m-attr解析值
-                    let runObj = this.parseFrameString(comObj, obj.value);
+                    // let runObj = this.parseFrameString(comObj, obj.value);
 
                     //添加解析组件标签属性
-                    this.addComponentLabelAttr(obj.incidentName, runObj, childComObj);
+                    this.addComponentLabelAttr(obj.incidentName, obj.value, 0, childComObj, comObj);
                 }, this);
             },
 
             /**
              * 添加解析组件标签属性
              * @param name
-             * @param runValue
+             * @param value
+             * @param type
              * @param comObj
+             * @param parentComObj
              */
-            addComponentLabelAttr: function (name, runValue, comObj) {
-                let flag = this.parseComponentProps(name, runValue, comObj);
+            addComponentLabelAttr: function (name, value, type, comObj, parentComObj) {
+                let flag = this.parseComponentProps(name, value, type, comObj, parentComObj);
                 if (!flag) {
+                    let dom = comObj.elDom;
+                    let runValue = value;
+                    if(type === 0){
+                        let that = this;
+                        runValue = this.parseFrameString(parentComObj, value);
+                        this.depNamesDispose(function (object, key, parameterObj) {
+                            new Subscriber(object, key, function () {
+                                let v = that.parseSpecialMAttrString(name, dom, that.parseFrameString(parameterObj, value), runValue);
+                                runValue = v;
+                                that.addDomAttr(dom, name, runValue);
+                            })
+                        }, parentComObj.parseAddObjData);
+                    }
                     //特殊属性处理
-                    runValue = this.parseSpecialMAttrString(name, comObj.elDom, runValue);
-                    let t = this.getDepNames();
-                    console.log(t);
-                    console.log(name);
+                    runValue = this.parseSpecialMAttrString(name, dom, runValue);
                     //添加dom属性
-                    this.addDomAttr(comObj.elDom, name, runValue)
+                    this.addDomAttr(dom, name, runValue)
                 }
             },
             /**
@@ -2045,28 +2049,84 @@
              * @param comObj
              * @returns {boolean}
              */
-            parseComponentProps: function (name, runValue, comObj) {
-                let prop = comObj.props[name];
-                if (prop) {
-                    this.componentPropsTypeDetection(runValue, name, prop, comObj);
+            parseComponentProps: function (name, value, type, comObj, parentComObj) {
+                let prop = comObj.$props[name];
+                if (prop !== undefined) {
+                    let that = this;
+                    Object.defineProperty(comObj.$props, name, {
+                        enumerable: true,
+                        configurable: true,
+                        get: function () {
+                            let v = null;
+                            if(type === 0){
+                                v =  that.parseFrameString(parentComObj, value);
+                            }else if(type === 1){
+                                v = value;
+                            }
+                            that.depIndirectDispose(null, comObj.$props, name);
+                            return v;
+                        },
+                    });
                     return true;
                 }
                 return false;
             },
+
             /**
-             * 解析组件值传递类型检测函数
-             * @param value
-             * @param name
-             * @param prop
+             * 格式组件的Props
              * @param comObj
              */
-            componentPropsTypeDetection: function (value, name, prop, comObj) {
-                if (value) {
-                    let type = prop.type;
-                } else {
-                    console.error(`${name}：值为空`);
+            formatComponentProps: function (comObj) {
+                let props = comObj.props;
+                if(props){
+                    comObj.$props = {};
+                    if(props.constructor === Array){
+                        Object.keys(props).forEach(function (key) {
+                            comObj.$props[key] = null;
+                        });
+                    }else if(props.constructor === Object){
+                        Object.keys(props).forEach(function (key) {
+                            comObj.$props[key] = props[key].default;
+                            if(comObj.$props[key] === undefined){
+                                comObj.$props[key] = null;
+                            }
+                        });
+                    }
+                    Object.keys(comObj.$props).forEach(function (key) {
+                        Object.defineProperty(comObj, key, {
+                            enumerable: true,
+                            configurable: true,
+                            get: function proxyGetter() {
+                                return comObj.$props[key];
+                            }
+                        });
+                    });
                 }
-                comObj[name] = value;
+            },
+            /**
+             * 解析组件值传递类型检测函数
+             * @param name
+             * @param value
+             * @param type
+             * @param comObj
+             * @param parentComObj
+             */
+            componentPropsTypeDetection: function (name, value, type, comObj, parentComObj) {
+                let that = this;
+                switch(type){
+                    case 0:
+                        Object.defineProperty(comObj, name, {
+                            enumerable: true,
+                            configurable: true,
+                            get: function proxyGetter() {
+                                return that.parseFrameString(parentComObj, value);
+                            }
+                        });
+                        break;
+                    case 1:
+                        comObj[name] = value;
+                        break;
+                }
             },
             /**
              * 解析组件标签的常规属性
@@ -2079,7 +2139,7 @@
                 let mAttr = this.searchAttrM(attr, /m-attr/);
                 if (!(name === 'ref' || mJs.flag || mAttr.flag)) {
                     //添加解析组件标签属性
-                    this.addComponentLabelAttr(name, attr.value, comObj);
+                    this.addComponentLabelAttr(name, attr.value, 1, comObj);
                 }
             },
             //生成唯一字符串
