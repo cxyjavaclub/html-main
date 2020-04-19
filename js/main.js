@@ -613,13 +613,19 @@
              */
             parseMIFGroupingObj: function (domArr, comObj) {
                 for (let d of domArr) {
+
                     for (let v of d) {
                         v.elDom = [];
+                        v.mifObj = d;
                         this.parseAllTypeLabel(v.el, comObj,
                             function (slotObj) {
                                 v.parseType = 0;
                                 v.slot = [slotObj];
                                 v.elDom.push(v.el);
+                                if(!comObj.$ifSlots){
+                                    comObj.$ifSlots = [];
+                                }
+                                comObj.$ifSlots.push(v);
                             }, function (com) {
                                 v.parseType = 1;
                                 v.elDom.push(com.elDom);
@@ -634,6 +640,10 @@
                                     for(let s of forObj.doms){
                                         v.elDom.push(s.dom);
                                     }
+                                    if(!comObj.$ifSlots){
+                                        comObj.$ifSlots = [];
+                                    }
+                                    comObj.$ifSlots.push(v);
                                 }else{
                                     v.elDom = forObj.doms;
                                 }
@@ -652,15 +662,6 @@
                 let domArr = [];
                 let ifs = [];
                 for (const c of doms) {
-                    let labelName = c.tagName.toLowerCase();
-                    if (labelName === 'slot') {
-                        if(ifs.length > 0){
-                            domArr.push(ifs);
-                        }
-                        flag = false;
-                        ifs = [];
-                        continue;
-                    }
                     if (flag) {
                         let mELIF = c.hasAttribute('m-elif');
                         if (mELIF) {
@@ -671,6 +672,9 @@
                                 show: false
                             });
                             c.removeAttribute('m-elif');
+                            if (c === doms[doms.length - 1]) {
+                                domArr.push(ifs);
+                            }
                             continue;
                         } else {
                             flag = false;
@@ -690,11 +694,10 @@
                         ifs.push({name: 'm-if', el: c, attr: c.getAttribute('m-if'), show: false});
                         c.removeAttribute('m-if');
                         flag = true;
+                        if (c === doms[doms.length - 1]) {
+                            domArr.push({ifs});
+                        }
                     }
-                }
-                //m-if结尾的那一个
-                if(ifs.length > 0){
-                    domArr.push(ifs);
                 }
                 return domArr;
             },
@@ -734,9 +737,6 @@
                 let child = dom.children;
                 //解析m-if分组
                 let domArr = this.parseMIFGrouping(child);
-                if(domArr.length > 0){
-                    console.log(domArr);
-                }
                 this.parseMIFGroupingObj(domArr, comObj);
                 let arr = this.regroupMIFGroupingObj(domArr);
                 //更新m-if显示视图
@@ -1104,6 +1104,25 @@
             },
 
             /**
+             *
+             * @param ifSlots
+             * @param slot
+             * @returns {string|null}
+             */
+            ifSlotsFind: function (ifSlots, slot) {
+                if(ifSlots){
+                    for(let i of ifSlots){
+                        for(let t of i.slot){
+                            if(t === slot){
+                                return i.elDom;
+                            }
+                        }
+                    }
+                }
+                return null;
+            },
+
+            /**
              * 组件插槽替换
              * @param dom  组件标签dom
              * @param comObj  组件对象
@@ -1119,12 +1138,19 @@
                 // console.log(comObj.$slots);
                 // console.log(domArr);
                 //清空if传递的elDom
+                let ifSlots = comObj.$ifSlots;
+                if(ifSlots){
+                    for(let i of ifSlots){
+                        i.elDom = [];
+                    }
+                }
                 //替换插槽
                 for (const [name, slot] of Object.entries(comObj.$slots)) {
                     //通过名称获取插槽对象
                     let obj = arrObj[name];
                     let slotDomArr = [];
                     for (const s of slot) {
+                        let elArr = this.ifSlotsFind(ifSlots, s);
                         let that = this;
                         let dom = s.dom;
                         if (obj) {
@@ -1133,15 +1159,27 @@
                                     //解析dom并添加额外数据
                                     this.parseComponentAndAddObjData(d, parentCom, s[obj.value], null, function (com) {
                                         slotDomArr.push(com.elDom);
-                                        that.insertBefore(com.elDom, dom);
+                                        if(elArr){
+                                            elArr.push(com.elDom);
+                                        }else{
+                                            that.insertBefore(com.elDom, dom);
+                                        }
                                     }, function (d) {
                                         slotDomArr.push(d);
-                                        that.insertBefore(d, dom);
+                                        if(elArr){
+                                            elArr.push(d);
+                                        }else {
+                                            that.insertBefore(d, dom);
+                                        }
                                     }, function (obj) {
                                         let d = dom;
                                         for (const c of obj.doms) {
-                                            that.insertAfter(c, d);
-                                            d = c;
+                                            if(elArr){
+                                                elArr.push(c);
+                                            }else{
+                                                that.insertAfter(c, d);
+                                                d = c;
+                                            }
                                             slotDomArr.push(c);
                                         }
                                     });
@@ -1149,7 +1187,11 @@
                             } else {
                                 for (const c of slotDomArr) {
                                     let d = this.createNewDom(c);
-                                    that.insertBefore(d, dom);
+                                    if(elArr){
+                                        elArr.push(d);
+                                    }else{
+                                        that.insertBefore(d, dom);
+                                    }
                                 }
                             }
                         } else {
@@ -1173,6 +1215,21 @@
                             }
                         }
                         this.deleteDomThis(dom);
+                    }
+                }
+                let parseMifObj = [];
+                if(ifSlots) {
+                    for(let i of ifSlots){
+                        let f = true;
+                        for(const p of parseMifObj){
+                            if(i.mifObj === p){
+                                f = false;
+                                break;
+                            }
+                        }
+                        if(f){
+                            this.parseMIFDomClassifyOrdinary(i.mifObj);
+                        }
                     }
                 }
             },
