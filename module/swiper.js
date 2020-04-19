@@ -40,18 +40,20 @@
         },
         template: `
                 <div style="border: 10px solid navajowhite">
-                <slot name="">
-                
-</slot>
 <!--                     <h2 m-js:click="h1Click">swiper</h2>-->
-                     <slot>
+                     <slot m-if="flag" m-for="v of 2">
                         <h2>默认插槽</h2>
-                     </slot>                                                                                                                                                                                                                                                                                       
+                     </slot>   
+                                                                                                                                                                                                                                                                                                     
 <!--                    <img m-js:click="setColor" ref="swiper-img" src="img/2.jpg">                        -->
                     <slot name="div" m-attr:num="index">
                         <h2>div插槽</h2>
-                   </slot>  
-                 
+                   </slot> 
+                   
+                   <slot m-if="flag">
+                        <h2>默认插槽</h2>
+                   </slot>
+                                                     
                     <slot name="new">
                         <h2>new插槽</h2>
                     </slot>   
@@ -75,7 +77,7 @@
         },
         //数据
         data:{
-            flag: false,
+            flag: true,
             className: 'num',
             num: 10, //轮播图片个数
             index: 1, //当前显示图片下标

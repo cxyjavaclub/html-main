@@ -7,19 +7,38 @@
 <body>
 
 <div id="app">
-    <h1 m-attr:class="{aa: flag}" class="bb cc" m-attr:aa="aa" m-attr:style="s" style="font-size: 50px;">123</h1>
+    <h1 m-if="flag" m-attr:aa="aa">
+        <p m-if="aa">11p</p>
+        <p m-else>12p</p>
+    </h1>
+    1212
+    <h1 m-elif="flag" m-attr:aa="aa">2</h1>
+    <swiper m-else m-for="v of 2" m-attr:aa="getStr" time="3200" m-attr:cc="aa" m-js:click="swiperH1Click">
+        <p>
+            <span>12</span>
+            <span>14</span>
+        </p>
+        <div m-slot:div="num">
+            {{num}}
+            abc
+        </div>
+    </swiper>
+
+<!--    <h1 m-elif="aa">2</h1>-->
+<!--    <h1 m-else>3</h1>-->
+<!--    <h1 m-attr:class="{aa: flag}" class="bb cc" m-attr:aa="aa" m-attr:style="s" style="font-size: 50px;">123</h1>-->
 <!--    <h1>{{123 + 456}}abc</h1>-->
 <!--    <h1 ref="h1" m-attr:aa="aa" m-js:click="swiperH1Click" m-attr:style="{fontSize: '45px'}">我是{{789}}h1app</h1>-->
 <!--    <img m-attr:src="imgUrl"/>-->
 <!--    <button m-js:click="buttonClick">按钮</button>-->
 
-    <swiper m-attr:aa="getStr" time="3200" m-attr:style="s" m-attr:cc="aa" m-js:click="swiperH1Click">
-        <div m-slot:div="num" m-text="num">
-            {{num}}
-            abc
-        </div>
-    </swiper>
-    <global m-else></global>
+<!--    <swiper m-attr:aa="getStr" time="3200" m-attr:style="s" m-attr:cc="aa" m-js:click="swiperH1Click">-->
+<!--        <div m-slot:div="num" m-text="num">-->
+<!--            {{num}}-->
+<!--            abc-->
+<!--        </div>-->
+<!--    </swiper>-->
+<!--    <global></global>-->
 
 
 <!--    <p m-if="true" m-attr:aa = '456'>4545</p>-->

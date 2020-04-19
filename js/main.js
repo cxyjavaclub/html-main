@@ -45,7 +45,7 @@
         }
         this.run = function () {
             let v = this.data[name];
-            if(this.value != v || v.constructor === Array){
+            if (this.value != v || v.constructor === Array) {
                 this.value = v;
                 this.fun();
             }
@@ -85,7 +85,7 @@
         $slots: {},
 
         //计算属性
-        computes:{},
+        computes: {},
 
         //发送事件函数
         $emit: function (name, ...arr) {
@@ -210,20 +210,38 @@
              * 解析组件dom的子dom
              * @param dom 必须为普通的html dom
              * @param newCom 组件对象
+             * @param ifArr m-if已经解析过的标签
              */
-            parseComponentDomChild: function (dom, newCom) {
+            parseComponentDomChild: function (dom, newCom, ifArr) {
                 if (dom) {
                     let child = dom.children;
                     for (let i = 0; i < child.length; i++) {
-                        //解析所有的类型标签
-                        this.parseAllTypeLabel(child[i], newCom, null, function (com) {
-                            //组件模板替换
-                            this.componentTemplateReplace(dom, com.elDom, child[i]);
-                        }, null, function (obj) {
-                            i += obj.num == 0 ? 0 : obj.num - 1;
-                        });
+                        if(!this.arrayFind(ifArr, child[i])){
+                            //解析所有的类型标签
+                            this.parseAllTypeLabel(child[i], newCom, null, function (com) {
+                                //组件模板替换
+                                this.componentTemplateReplace(dom, com.elDom, child[i]);
+                            }, null, function (obj) {
+                                i += obj.num == 0 ? 0 : obj.num - 1;
+                            });
+                        }
                     }
                 }
+            },
+
+            /**
+             * 查找数组
+             * @param arr
+             * @param findObj
+             * @returns {boolean}
+             */
+            arrayFind: function (arr, findObj) {
+                for(let a of arr){
+                    if(a === findObj){
+                        return true;
+                    }
+                }
+                return false;
             },
             /**
              * 解析所有的类型标签
@@ -244,8 +262,8 @@
                     if (dom !== comObj.elDom) {
                         //解析组件标签的m-for
                         let obj = this.parseComponentLabelMFor(dom, comObj);
-                        this.runFunction(funMFor, obj);
                         if (obj.num > 0) {
+                            this.runFunction(funMFor, obj);
                             return;
                         }
                     }
@@ -314,7 +332,6 @@
 
                     //组件插槽替换
                     this.componentSlotReplace(comLabel, copyCom, parentCom);
-
                     return copyCom;
                 } else {
                     let obj = {};
@@ -347,10 +364,9 @@
                 this.parseComponentText(dom, comObj);
 
                 //解析组件子标签的m-if m-elif m-else
-                this.parseComponentChildLabelMIF(dom, comObj);
-
+                let ifArr = this.parseComponentChildLabelMIF(dom, comObj);
                 //解析组件dom的子dom
-                this.parseComponentDomChild(dom, comObj);
+                this.parseComponentDomChild(dom, comObj, ifArr);
             },
             //通过组件生成新的dom
             createNewComElDom: function (comObj) {
@@ -473,7 +489,6 @@
             },
 
 
-
             /**
              * 解析组件m-if
              * @param comObj
@@ -499,16 +514,6 @@
             parseMIFDispose: function (dom, comObj, ifAttr) {
                 let mIFValue = dom.getAttribute(ifAttr);
                 if (mIFValue) {
-                    // if (comObj[mIFValue]) {
-                    //     let next = dom.nextSibling;
-                    //     new Subscriber(comObj.data, mIFValue, function () {
-                    //         if (comObj[mIFValue]) {
-                    //             next.parentNode.insertBefore(dom, next);
-                    //         } else {
-                    //             dom.parentNode.removeChild(dom);
-                    //         }
-                    //     })
-                    // }
                     let runValue = this.parseFrameString(comObj, mIFValue);
                     if (runValue) {
                         return true;
@@ -517,27 +522,46 @@
                 return false;
             },
 
+            /**
+             *  解析主键m-if显示元素(普通)
+             * @param mifArr
+             */
+            parseMIFDomClassifyOrdinary: function (mifArr) {
+                for (let i = 0; i < mifArr.length; i++) {
+                    let v = mifArr[i];
+                    if (v.show || v.name === 'm-else') {
+                        let after = v.replace;
+                        for(let e of v.elDom){
+                            this.insertAfter(e, after);
+                            after = e;
+                        }
+                    }
+                }
+            },
+
 
             /**
              *  解析主键m-if显示元素
-             * @param domArr
-             * @param comObj
+             * @param mifObj
              */
-            parseMIFDomClassify: function (domArr, comObj) {
-                for (const d of domArr) {
-                    let length = d.length;
-                    for (let i = 0; i < length; i++) {
-                        let v = d[i];
-                        v.show = false;
-                        if (v.name === 'm-else') {
-                            v.show = true;
-                            break;
+            parseMIFDomClassify: function (mifObj) {
+                let d = mifObj.val;
+                if (mifObj.showObj) {
+                    for(let s of mifObj.showObj.elDom){
+                        this.removeLabelElement(s);
+                    }
+                    mifObj.showObj = null;
+                }
+                for (let i = 0; i < d.length; i++) {
+                    let v = d[i];
+                    if (v.show || v.name === 'm-else') {
+                        let after = v.replace;
+                        for(let e of v.elDom){
+                            this.insertAfter(e, after);
+                            after = e;
                         }
-                        let mIFFlag = this.parseMIFDispose(v.value, comObj, v.name);
-                        if (mIFFlag) {
-                            v.show = true;
-                            break;
-                        }
+                        mifObj.showObj = v;
+                        return v.elDom;
                     }
                 }
             },
@@ -548,12 +572,82 @@
              * @param comObj
              */
             updateMIFDom: function (domArr, comObj) {
-                this.parseMIFDomClassify(domArr, comObj);
-                for (const d of domArr) {
-                    for (const c of d) {
-                        if (!c.show) {
-                            c.value.parentNode.removeChild(c.value);
+                let arr = [];
+                for (let d of domArr) {
+                    for (let v of d.val) {
+                        if (v.name !== 'm-else') {
+                            let that = this;
+                            let runObj = this.parseFrameString(comObj, v.attr);
+                            this.depNamesDispose(function (object, key, parameterObj) {
+                                new Subscriber(object, key, function () {
+                                    let val = that.parseFrameString(parameterObj, v.attr);
+                                    if (val) {
+                                        v.show = true;
+                                    } else {
+                                        v.show = false;
+                                    }
+                                    if (!(v.show && d.showObj === v)) {
+                                        that.parseMIFDomClassify(d);
+                                    }
+                                })
+                            }, comObj.parseAddObjData);
+                            if (runObj) {
+                                v.show = true;
+                            }
                         }
+                    }
+                    let ar = this.parseMIFDomClassify(d);
+                    if(ar){
+                        for(let a of ar){
+                            arr.push(a);
+                        }
+                    }
+                }
+                return arr;
+            },
+
+            /**
+             * 解析
+             * @param domArr
+             * @param comObj
+             */
+            parseMIFGroupingObj: function (domArr, comObj) {
+                for (let d of domArr) {
+
+                    for (let v of d) {
+                        v.elDom = [];
+                        v.mifObj = d;
+                        this.parseAllTypeLabel(v.el, comObj,
+                            function (slotObj) {
+                                v.parseType = 0;
+                                v.slot = [slotObj];
+                                v.elDom.push(v.el);
+                                if(!comObj.$ifSlots){
+                                    comObj.$ifSlots = [];
+                                }
+                                comObj.$ifSlots.push(v);
+                            }, function (com) {
+                                v.parseType = 1;
+                                v.elDom.push(com.elDom);
+                                this.replaceLabelElement(com.elDom, v.el);
+                            }, function (dom) {
+                                v.parseType = 2;
+                                v.elDom.push(dom);
+                            }, function (forObj) {
+                                v.parseType = 3;
+                                if(forObj.parseType === 0){
+                                    v.slot = forObj.doms;
+                                    for(let s of forObj.doms){
+                                        v.elDom.push(s.dom);
+                                    }
+                                    if(!comObj.$ifSlots){
+                                        comObj.$ifSlots = [];
+                                    }
+                                    comObj.$ifSlots.push(v);
+                                }else{
+                                    v.elDom = forObj.doms;
+                                }
+                        })
                     }
                 }
             },
@@ -571,14 +665,24 @@
                     if (flag) {
                         let mELIF = c.hasAttribute('m-elif');
                         if (mELIF) {
-                            ifs.push({name: 'm-elif', value: c, show: false});
+                            ifs.push({
+                                name: 'm-elif',
+                                el: c,
+                                attr: c.getAttribute('m-elif'),
+                                show: false
+                            });
+                            c.removeAttribute('m-elif');
+                            if (c === doms[doms.length - 1]) {
+                                domArr.push(ifs);
+                            }
                             continue;
                         } else {
                             flag = false;
                             let mELSE = c.hasAttribute('m-else');
                             domArr.push(ifs);
                             if (mELSE) {
-                                ifs.push({name: 'm-else', value: c, show: false});
+                                ifs.push({name: 'm-else', el: c, show: false});
+                                c.removeAttribute('m-else');
                                 ifs = [];
                                 continue;
                             }
@@ -587,12 +691,42 @@
                     }
                     let mIF = c.hasAttribute('m-if');
                     if (mIF) {
-                        ifs.push({name: 'm-if', value: c, show: false});
+                        ifs.push({name: 'm-if', el: c, attr: c.getAttribute('m-if'), show: false});
+                        c.removeAttribute('m-if');
                         flag = true;
+                        if (c === doms[doms.length - 1]) {
+                            domArr.push({ifs});
+                        }
                     }
                 }
                 return domArr;
             },
+
+            /**
+             * 重组m-if分组对象
+             * @param domArr
+             */
+            regroupMIFGroupingObj: function (domArr) {
+                let arr = [];
+                for (let a of domArr) {
+                    let obj = {};
+                    if (a.length > 0) {
+                        obj.val = a;
+                        for(let v of obj.val){
+                            if(v.elDom.length > 0) {
+                                v.replace = document.createTextNode('');
+                                this.insertBefore(v.replace, v.elDom[0]);
+                                for(let e of v.elDom){
+                                    this.removeLabelElement(e);
+                                }
+                            }
+                        }
+                        arr.push(obj);
+                    }
+                }
+                return arr;
+            },
+
 
             /**
              * 解析组件子标签的m-if m-elif m-else
@@ -603,9 +737,11 @@
                 let child = dom.children;
                 //解析m-if分组
                 let domArr = this.parseMIFGrouping(child);
-                // console.log(domArr);
+                this.parseMIFGroupingObj(domArr, comObj);
+                let arr = this.regroupMIFGroupingObj(domArr);
                 //更新m-if显示视图
-                this.updateMIFDom(domArr, comObj);
+                let ar = this.updateMIFDom(arr, comObj);
+                return ar;
             },
 
 
@@ -622,8 +758,19 @@
                 let newDom = this.createNewDom(copyDom);
                 this.insertAfter(newDom, replaceDom);
                 forRecordObj.num++;
-                forRecordObj.doms.push(newDom);
-                this.parseComponentAndAddObjData(newDom, comObj, addObjData);
+                this.parseComponentAndAddObjData(newDom, comObj, addObjData,
+                    function (slotObj) {
+                        forRecordObj.parseType = 0;
+                        forRecordObj.doms.push(slotObj);
+                    }, function (com) {
+                        this.replaceLabelElement(com.elDom, newDom);
+                        forRecordObj.parseType = 1;
+                        newDom = com.elDom;
+                        forRecordObj.doms.push(com.elDom);
+                    }, function (dom) {
+                        forRecordObj.parseType = 2;
+                        forRecordObj.doms.push(dom);
+                    });
                 return newDom;
             },
             /**
@@ -635,7 +782,7 @@
             parseComponentAndAddObjData: function (dom, comObj, addObjData, funSlot, funCom, funHtml, funMFor) {
                 let obj = {};
                 let objG = [];
-                if(addObjData) {
+                if (addObjData) {
                     if (comObj.parseAddObjData) {
                         for (const [name, value] of Object.entries(addObjData)) {
                             let v = comObj.parseAddObjData[name];
@@ -664,7 +811,7 @@
                 }
                 //解析所有的类型标签
                 this.parseAllTypeLabel(dom, comObj, funSlot, funCom, funHtml, funMFor);
-                if(addObjData) {
+                if (addObjData) {
                     if (comObj.parseAddObjData === addObjData) {
                         for (const [name] of Object.entries(addObjData)) {
                             delete comObj[name];
@@ -716,7 +863,7 @@
              * @param comObj
              */
             parseDomMFOR: function (dom, comObj) {
-                let obj = {num: 0, doms: []};
+                let obj = {num: 0, parseType: null, doms: []};
                 let newDom = dom;
                 let mForValue = dom.getAttribute('m-for');
                 if (mForValue) {
@@ -811,6 +958,29 @@
                     parent.insertBefore(newElement, targentElement);
                 }
             },
+
+            /**
+             * 删除标签
+             * @param element
+             */
+            removeLabelElement: function (element) {
+                let parent = element.parentNode;
+                if (parent) {
+                    parent.removeChild(element);
+                }
+            },
+
+            /**
+             * 替换标签
+             * @param newNode
+             * @param oldNode
+             */
+            replaceLabelElement: function (newNode, oldNode) {
+                let parent = oldNode.parentNode;
+                if (parent) {
+                    parent.replaceChild(newNode, oldNode)
+                }
+            },
             /**
              * 解析组件插槽
              * @param dom  被节点标签
@@ -860,7 +1030,7 @@
                     let names = this.getDepNames();
                     let incidentName = obj.incidentName;
                     slotObj[incidentName] = {};
-                    if(names.length > 0) {
+                    if (names.length > 0) {
                         Object.defineProperty(slotObj[incidentName], incidentName, {
                             enumerable: true,
                             configurable: true,
@@ -890,23 +1060,23 @@
                 let names = this.getDepNames();
                 let arr = [];
                 let arr1 = [];
-                if(names.length > 1) {
+                if (names.length > 1) {
                     // console.log(names)
                     if (names.length > 2) {
                         for (let i = names.length - 2; i > 1; i -= 2) {
                             if (names[i] === names[i - 2][names[i - 1]]) {
                                 arr.push(i - 1);
                                 arr.push(i - 2);
-                            }else{
+                            } else {
                                 arr1.push(names[i]);
                                 arr1.push(names[i + 1]);
                             }
                         }
                     }
                     arr1.push(names[0], names[1]);
-                    if(addObjData){
-                        for(const a of addObjData) {
-                            if(a) {
+                    if (addObjData) {
+                        for (const a of addObjData) {
+                            if (a) {
                                 Object.keys(a).forEach(function (key) {
                                     arr1.push(a);
                                     arr1.push(key);
@@ -915,7 +1085,7 @@
                         }
                     }
                     let parameterObj = {};
-                    for(let i = 0; i < arr1.length; i += 2){
+                    for (let i = 0; i < arr1.length; i += 2) {
                         Object.defineProperty(parameterObj, arr1[i + 1], {
                             enumerable: true,
                             configurable: true,
@@ -927,10 +1097,29 @@
                     for (const a of arr) {
                         names.splice(a, 1);
                     }
-                    for(let i = 0; i < names.length; i += 2){
+                    for (let i = 0; i < names.length; i += 2) {
                         fun(names[i], names[i + 1], parameterObj);
                     }
                 }
+            },
+
+            /**
+             *
+             * @param ifSlots
+             * @param slot
+             * @returns {string|null}
+             */
+            ifSlotsFind: function (ifSlots, slot) {
+                if(ifSlots){
+                    for(let i of ifSlots){
+                        for(let t of i.slot){
+                            if(t === slot){
+                                return i.elDom;
+                            }
+                        }
+                    }
+                }
+                return null;
             },
 
             /**
@@ -942,12 +1131,26 @@
             componentSlotReplace: function (dom, comObj, parentCom) {
                 //查找标签的m-slot
                 let arrObj = this.searchLabelMSlot(dom);
+                // let child = dom.children;
+                //解析m-if分组
+                // let domArr = this.parseMIFGrouping(child);
+                // console.log(arrObj);
+                // console.log(comObj.$slots);
+                // console.log(domArr);
+                //清空if传递的elDom
+                let ifSlots = comObj.$ifSlots;
+                if(ifSlots){
+                    for(let i of ifSlots){
+                        i.elDom = [];
+                    }
+                }
                 //替换插槽
                 for (const [name, slot] of Object.entries(comObj.$slots)) {
                     //通过名称获取插槽对象
                     let obj = arrObj[name];
                     let slotDomArr = [];
                     for (const s of slot) {
+                        let elArr = this.ifSlotsFind(ifSlots, s);
                         let that = this;
                         let dom = s.dom;
                         if (obj) {
@@ -955,23 +1158,40 @@
                                 for (const d of obj.dom) {
                                     //解析dom并添加额外数据
                                     this.parseComponentAndAddObjData(d, parentCom, s[obj.value], null, function (com) {
-                                        that.insertBefore(com.elDom, dom);
                                         slotDomArr.push(com.elDom);
+                                        if(elArr){
+                                            elArr.push(com.elDom);
+                                        }else{
+                                            that.insertBefore(com.elDom, dom);
+                                        }
                                     }, function (d) {
                                         slotDomArr.push(d);
-                                        that.insertBefore(d, dom);
+                                        if(elArr){
+                                            elArr.push(d);
+                                        }else {
+                                            that.insertBefore(d, dom);
+                                        }
                                     }, function (obj) {
                                         let d = dom;
                                         for (const c of obj.doms) {
-                                            that.insertAfter(c, d);
-                                            d = c;
+                                            if(elArr){
+                                                elArr.push(c);
+                                            }else{
+                                                that.insertAfter(c, d);
+                                                d = c;
+                                            }
                                             slotDomArr.push(c);
                                         }
                                     });
                                 }
                             } else {
                                 for (const c of slotDomArr) {
-                                    that.insertBefore(this.createNewDom(c), dom);
+                                    let d = this.createNewDom(c);
+                                    if(elArr){
+                                        elArr.push(d);
+                                    }else{
+                                        that.insertBefore(d, dom);
+                                    }
                                 }
                             }
                         } else {
@@ -993,9 +1213,23 @@
                                 });
                                 i--;
                             }
-
                         }
                         this.deleteDomThis(dom);
+                    }
+                }
+                let parseMifObj = [];
+                if(ifSlots) {
+                    for(let i of ifSlots){
+                        let f = true;
+                        for(const p of parseMifObj){
+                            if(i.mifObj === p){
+                                f = false;
+                                break;
+                            }
+                        }
+                        if(f){
+                            this.parseMIFDomClassifyOrdinary(i.mifObj);
+                        }
                     }
                 }
             },
@@ -1064,7 +1298,7 @@
                         }
                         for (const v in value) {
                             this.resetComponentKeys(storageObj, name, v);
-                            if(name === 'data'){
+                            if (name === 'data') {
                                 this.rewriteArrayPrototypeFun(value[v], value, v)
                             }
                         }
@@ -1117,7 +1351,7 @@
              * 处理组件的计算属性
              * @param comObj
              */
-            resetComponentComputes:  function (comObj) {
+            resetComponentComputes: function (comObj) {
                 let computes = comObj.computes;
                 comObj.computes = {};
                 let that = this;
@@ -1147,11 +1381,11 @@
              * @param value
              * @param comObj
              */
-            computesDataHijack: function(obj, name, value, comObj){
+            computesDataHijack: function (obj, name, value, comObj) {
                 let constructor = value.constructor;
                 let dep = new Dep();
                 let that = this;
-                if(constructor === Function){
+                if (constructor === Function) {
                     Object.defineProperty(obj, name, {
                         enumerable: true,
                         configurable: true,
@@ -1160,25 +1394,25 @@
                             return value.call(comObj);
                         }
                     });
-                }else if(constructor === Object){
+                } else if (constructor === Object) {
                     let obj1 = {
                         enumerable: true,
                         configurable: true
                     };
-                    if(value.get){
+                    if (value.get) {
                         obj1.get = function () {
                             let get = value.get;
                             that.depIndirectDispose(dep, obj, name);
-                            if(get && get.constructor === Function){
+                            if (get && get.constructor === Function) {
                                 return value.get.call(comObj);
-                            }else if(value.constructor === Function){
+                            } else if (value.constructor === Function) {
                                 return value.call(comObj);
                             }
                             return value;
                         }
                     }
-                    if(value.set){
-                        if(value.set.constructor === Function){
+                    if (value.set) {
+                        if (value.set.constructor === Function) {
                             let set = value.set;
                             obj1.set = function (newVal) {
                                 value = set.call(comObj, newVal);
@@ -1201,16 +1435,16 @@
                     enumerable: true,
                     configurable: true,
                     get: function proxyGetter() {
-                        if(name.constructor === Object){
+                        if (name.constructor === Object) {
                             return name[key];
-                        }else{
+                        } else {
                             return storageObj[name][key];
                         }
                     },
                     set: function proxySetter(newVal) {
-                        if(name.constructor === Object){
+                        if (name.constructor === Object) {
                             name[key] = newVal;
-                        }else{
+                        } else {
                             storageObj[name][key] = newVal;
                         }
                     }
@@ -1222,51 +1456,51 @@
              * @param arr
              */
             rewriteArrayPrototypeFun: function (arr, obj, name) {
-                if(arr && arr.constructor === Array){
+                if (arr && arr.constructor === Array) {
                     let that = this;
                     //所有的数组共用一个原型对象所以这里重写创建一个数组原型对象
                     let proto = Object.create(Array.prototype);
                     proto.push = function (...items) {
-                        for(const v of items){
+                        for (const v of items) {
                             this[this.length] = v;
                         }
                         obj[name] = this;
                     }
-                    proto.unshift = function(...items){
+                    proto.unshift = function (...items) {
                         let len = items.length;
                         let thisLen = this.length;
                         let arr = []
-                        for(let i = 0; i < thisLen; i++){
+                        for (let i = 0; i < thisLen; i++) {
                             arr[i] = this[i];
                         }
-                        for(let i = 0; i < len; i++){
+                        for (let i = 0; i < len; i++) {
                             this[i] = items[i];
                         }
-                        for(let i = 0; i < thisLen; i++){
+                        for (let i = 0; i < thisLen; i++) {
                             this[i + len] = arr[i];
                         }
                         obj[name] = this;
                     }
                     proto.pop = function () {
-                        if(this.length > 0) {
+                        if (this.length > 0) {
                             this.length -= 1;
                         }
                         obj[name] = this;
                     }
-                    proto.shift = function(){
-                        if(this.length > 0) {
+                    proto.shift = function () {
+                        if (this.length > 0) {
                             let thisLen = this.length;
-                            for(let i = 0; i < thisLen - 1; i++){
+                            for (let i = 0; i < thisLen - 1; i++) {
                                 this[i] = this[i + 1];
                             }
                             this.length -= 1;
                         }
                         obj[name] = this;
                     }
-                    proto.splice = function(start, deleteCount){
-                        if(this.length > 0 && start > -1 && deleteCount > 0) {
+                    proto.splice = function (start, deleteCount) {
+                        if (this.length > 0 && start > -1 && deleteCount > 0) {
                             let thisLen = this.length;
-                            for(let i = start; i < thisLen - deleteCount; i++){
+                            for (let i = start; i < thisLen - deleteCount; i++) {
                                 this[i] = this[i + deleteCount];
                             }
                             this.length -= deleteCount;
@@ -1700,7 +1934,7 @@
                 if (!flag) {
                     let dom = comObj.elDom;
                     let runValue = value;
-                    if(type === 0){
+                    if (type === 0) {
                         let that = this;
                         runValue = this.parseFrameString(parentComObj, value);
                         this.depNamesDispose(function (object, key, parameterObj) {
@@ -1758,12 +1992,12 @@
              * @param attrValue
              * @param deleteAttr
              */
-            parseSpecialDeleteMAttrString: function(name, attrValue, deleteAttr){
+            parseSpecialDeleteMAttrString: function (name, attrValue, deleteAttr) {
                 let attrArr;
                 let deleteArr;
                 let str = ' ';
                 let sp = '';
-                if(!deleteAttr){
+                if (!deleteAttr) {
                     return attrValue;
                 }
                 if (name === 'class') {
@@ -1772,7 +2006,7 @@
                 } else if (name === 'style') {
                     sp = ';';
                 }
-                if(name === 'class' || name === 'style') {
+                if (name === 'class' || name === 'style') {
                     attrArr = this.splitString(attrValue, sp);
                     deleteArr = this.splitString(deleteAttr, sp);
                     for (let d of deleteArr) {
@@ -1783,7 +2017,7 @@
                             }
                         }
                     }
-                    for(let a of attrArr){
+                    for (let a of attrArr) {
                         str += a + sp;
                     }
                 }
@@ -1797,7 +2031,7 @@
              */
             splitString: function (str, sp) {
                 let arr = [];
-                if(str) {
+                if (str) {
                     let arrStr = str.split(sp);
                     for (let s of arrStr) {
                         s = s.trim();
@@ -1883,13 +2117,13 @@
                 let str3 = `return ${uuid};`;
                 let runStr = str1 + str2 + str3;
                 let result;
-                try{
+                try {
                     Dep.names = [];
                     let wObj = this.addObjectAttrToGlobal(newObj);
                     result = this.stringToFunRun(newObj, runStr);
                     //注意：实现函数里面不能读取对象里的值否则会改变Dep.names的值导致处理有问题
                     this.removeObjectAttrToGlobal(newObj, wObj);
-                }catch (e) {
+                } catch (e) {
                     console.error(e);
                 }
                 return result;
@@ -1903,10 +2137,10 @@
                 let obj1 = {}
                 Object.keys(obj).forEach(function (key) {
                     let v = global[key];
-                    if(v !== undefined){
+                    if (v !== undefined) {
                         obj1[key] = v;
                     }
-                    try{
+                    try {
                         Object.defineProperty(global, key, {
                             enumerable: false,
                             configurable: true,
@@ -1914,7 +2148,7 @@
                                 return obj[key];
                             },
                         });
-                    }catch (e) {
+                    } catch (e) {
 
                     }
                 })
@@ -2058,9 +2292,9 @@
                         configurable: true,
                         get: function () {
                             let v = null;
-                            if(type === 0){
-                                v =  that.parseFrameString(parentComObj, value);
-                            }else if(type === 1){
+                            if (type === 0) {
+                                v = that.parseFrameString(parentComObj, value);
+                            } else if (type === 1) {
                                 v = value;
                             }
                             that.depIndirectDispose(null, comObj.$props, name);
@@ -2078,16 +2312,16 @@
              */
             formatComponentProps: function (comObj) {
                 let props = comObj.props;
-                if(props){
+                if (props) {
                     comObj.$props = {};
-                    if(props.constructor === Array){
+                    if (props.constructor === Array) {
                         Object.keys(props).forEach(function (key) {
                             comObj.$props[key] = null;
                         });
-                    }else if(props.constructor === Object){
+                    } else if (props.constructor === Object) {
                         Object.keys(props).forEach(function (key) {
                             comObj.$props[key] = props[key].default;
-                            if(comObj.$props[key] === undefined){
+                            if (comObj.$props[key] === undefined) {
                                 comObj.$props[key] = null;
                             }
                         });
@@ -2113,7 +2347,7 @@
              */
             componentPropsTypeDetection: function (name, value, type, comObj, parentComObj) {
                 let that = this;
-                switch(type){
+                switch (type) {
                     case 0:
                         Object.defineProperty(comObj, name, {
                             enumerable: true,
