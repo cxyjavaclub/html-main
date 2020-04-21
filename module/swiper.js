@@ -41,16 +41,20 @@
         template: `
                 <div style="border: 10px solid navajowhite">
 <!--                     <h2 m-js:click="h1Click">swiper</h2>-->
-                     <slot m-if="flag" m-for="v of 2">
-                        <h2>默认插槽</h2>
-                     </slot>   
+<!--                     <slot m-if="flag" m-for="v of 2">-->
+<!--                        <h2>默认插槽</h2>-->
+<!--                     </slot>   -->
                                                                                                                                                                                                                                                                                                      
 <!--                    <img m-js:click="setColor" ref="swiper-img" src="img/2.jpg">                        -->
-                    <slot name="div" m-attr:num="index">
+                    <slot name="div">
                         <h2>div插槽</h2>
                    </slot> 
                    
-                   <slot m-if="flag">
+                   <slot name="div" m-attr:num="index">
+                        <h2>div插槽</h2>
+                   </slot> 
+                   
+                   <slot>
                         <h2>默认插槽</h2>
                    </slot>
                                                      

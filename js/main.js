@@ -613,7 +613,6 @@
              */
             parseMIFGroupingObj: function (domArr, comObj) {
                 for (let d of domArr) {
-
                     for (let v of d) {
                         v.elDom = [];
                         v.mifObj = d;
@@ -1123,6 +1122,25 @@
             },
 
             /**
+             *
+             * @param domArr
+             * @param dom
+             * @returns {any|null}
+             */
+            ifLabelFind: function (domArr, dom) {
+                if(domArr){
+                    for(let i of domArr){
+                        for(let t of i){
+                            if(t.el === dom){
+                                return t;
+                            }
+                        }
+                    }
+                }
+                return null;
+            },
+
+            /**
              * 组件插槽替换
              * @param dom  组件标签dom
              * @param comObj  组件对象
@@ -1131,12 +1149,9 @@
             componentSlotReplace: function (dom, comObj, parentCom) {
                 //查找标签的m-slot
                 let arrObj = this.searchLabelMSlot(dom);
-                // let child = dom.children;
+                let child = dom.children;
                 //解析m-if分组
-                // let domArr = this.parseMIFGrouping(child);
-                // console.log(arrObj);
-                // console.log(comObj.$slots);
-                // console.log(domArr);
+                let domArr = this.parseMIFGrouping(child);
                 //清空if传递的elDom
                 let ifSlots = comObj.$ifSlots;
                 if(ifSlots){
@@ -1144,6 +1159,8 @@
                         i.elDom = [];
                     }
                 }
+                console.log(comObj.$slots);
+                console.log(arrObj);
                 //替换插槽
                 for (const [name, slot] of Object.entries(comObj.$slots)) {
                     //通过名称获取插槽对象
@@ -1156,6 +1173,7 @@
                         if (obj) {
                             if (slotDomArr.length === 0) {
                                 for (const d of obj.dom) {
+                                    let ifObj = this.ifLabelFind(domArr, d);
                                     //解析dom并添加额外数据
                                     this.parseComponentAndAddObjData(d, parentCom, s[obj.value], null, function (com) {
                                         slotDomArr.push(com.elDom);
@@ -1163,6 +1181,9 @@
                                             elArr.push(com.elDom);
                                         }else{
                                             that.insertBefore(com.elDom, dom);
+                                            if(ifObj){
+                                                ifObj.elDom = new Array(com.elDom);
+                                            }
                                         }
                                     }, function (d) {
                                         slotDomArr.push(d);
@@ -1170,6 +1191,9 @@
                                             elArr.push(d);
                                         }else {
                                             that.insertBefore(d, dom);
+                                            if(ifObj){
+                                                ifObj.elDom = new Array(d);
+                                            }
                                         }
                                     }, function (obj) {
                                         let d = dom;
@@ -1178,6 +1202,13 @@
                                                 elArr.push(c);
                                             }else{
                                                 that.insertAfter(c, d);
+                                                if(ifObj){
+                                                    if(ifObj.elDom){
+                                                        ifObj.elDom.push(c);
+                                                    }else {
+                                                        ifObj.elDom = new Array(c);
+                                                    }
+                                                }
                                                 d = c;
                                             }
                                             slotDomArr.push(c);
@@ -1185,6 +1216,7 @@
                                     });
                                 }
                             } else {
+                                let arr1 = this.copyObject(domArr);
                                 for (const c of slotDomArr) {
                                     let d = this.createNewDom(c);
                                     if(elArr){
@@ -1217,6 +1249,10 @@
                         this.deleteDomThis(dom);
                     }
                 }
+                //更新m-if显示视图
+                let arr = this.regroupMIFGroupingObj(domArr);
+                this.updateMIFDom(arr, parentCom);
+                //
                 let parseMifObj = [];
                 if(ifSlots) {
                     for(let i of ifSlots){
