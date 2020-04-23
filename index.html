@@ -7,21 +7,23 @@
 <body>
 
 <div id="app">
-    <h1 m-if="flag" m-attr:aa="aa">
-        <p m-if="aa">11p</p>
-        <p m-else>12p</p>
+    <h1 m-if="flag" ref="h1" m-attr:aa="aa">
+        <input type="text" m-attr:value="aa">
     </h1>
     1212
     <h1 m-elif="flag" m-attr:aa="aa">2</h1>
-    <swiper m-else m-for="v of 2" m-attr:aa="getStr" time="3200" m-attr:cc="aa" m-js:click="swiperH1Click">
-        <p m-if="aa">
+    <swiper ref="swiper" m-attr:aa="getStr" time="3200" m-attr:cc="aa" m-js:click="swiperH1Click">
+        <p m-if="flag" m-attr:aa="aa">
             <span>12</span>
             <span>14</span>
         </p>
-        <h1 m-else>789</h1>
         <div m-slot:div="num">
             {{num}}
             abc
+        </div>
+        <p m-if="flag1">123456</p>
+        <div m-else m-slot:new>
+            258abc147
         </div>
     </swiper>
 
@@ -104,7 +106,8 @@
     let main = new Main({
         el: '#app',
         data: {
-            flag: false,
+            flag: true,
+            flag1: true,
             aa: 123,
             time: 800,
             imgUrl: 'img/1.jpg',

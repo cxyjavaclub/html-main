@@ -46,22 +46,17 @@
 <!--                     </slot>   -->
                                                                                                                                                                                                                                                                                                      
 <!--                    <img m-js:click="setColor" ref="swiper-img" src="img/2.jpg">                        -->
-                    <slot name="div">
+                    <slot name="div" m-attr:num="num">                       
                         <h2>div插槽</h2>
-                   </slot> 
-                   
-                   <slot name="div" m-attr:num="index">
-                        <h2>div插槽</h2>
-                   </slot> 
-                   
-                   <slot>
-                        <h2>默认插槽</h2>
-                   </slot>
-                                                     
+                   </slot>                   
+                   <slot m-if="flag">
+                        <h2>默认插槽</h2>                       
+                   </slot>  
+                   <h1 m-else>456123</h1>                                                                                                                   
                     <slot name="new">
                         <h2>new插槽</h2>
-                    </slot>   
-                    <h1 m-js:click="h1Click" m-attr:aa="cc">我是swiperH1</h1>
+                    </slot>                                                       
+                    <h1 m-js:click="h1Click" m-attr:aa="cc">我是swiperH1</h1>                                    
                 </div>
             `, //组件模板（html）
         props:{

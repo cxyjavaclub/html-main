@@ -237,7 +237,7 @@
              */
             arrayFind: function (arr, findObj) {
                 for(let a of arr){
-                    if(a === findObj){
+                    if(a.el === findObj){
                         return true;
                     }
                 }
@@ -268,7 +268,7 @@
                         }
                     }
                     //解析组件插槽
-                    let slotObj = this.parseComponentSlot(dom, comObj);
+                    let slotObj = this.parseComponentSlot(dom, comObj, funSlot && funSlot.on);
                     if (!slotObj) {
                         //通过名称获取组件
                         let com = this.getFindNameComponent(comObj, dom.tagName);
@@ -283,7 +283,14 @@
                             this.runFunction(funHtml, dom);
                         }
                     } else {
-                        this.runFunction(funSlot, slotObj);
+                        if(funSlot){
+                            if(funSlot.constructor === Function){
+                                this.runFunction(funSlot, slotObj);
+                            }else{
+                                this.runFunction(funSlot.fun, slotObj);
+                            }
+                        }
+
                     }
                 }
             },
@@ -388,23 +395,6 @@
                 comObj.originalDom = originalDom;
             },
 
-
-            /**
-             * 解析组件所有的属性和标签
-             * @param dom
-             * @param comObj
-             */
-            parseComponentAllAttrAndLabel: function (dom, comObj) {
-                //解析组件属性
-                this.parseComponentAttr(dom, comObj);
-                //解析组件文本
-                this.parseComponentText(dom, comObj);
-                //解析组件dom
-                // console.log(dom);
-                // this.parseComponentDom(dom, comObj);
-            },
-
-
             /**
              * 解析组件属性
              * @param dom 组件elDom
@@ -475,7 +465,7 @@
                 let attrs = labelDom.attributes;
                 for (let a of attrs) {
                     //解析组件标签ref
-                    this.parseComponentLabelRef(a, childComObj.elDom, comObj);
+                    this.parseComponentLabelRef(a, childComObj, comObj);
 
                     //解析组件标签常规属性
                     this.parseComponentLabelRoutine(a, childComObj);
@@ -526,12 +516,20 @@
              *  解析主键m-if显示元素(普通)
              * @param mifArr
              */
-            parseMIFDomClassifyOrdinary: function (mifArr) {
-                for (let i = 0; i < mifArr.length; i++) {
-                    let v = mifArr[i];
-                    if (v.show || v.name === 'm-else') {
+            parseMIFDomShow: function (v) {
+                if(v) {
+                    if (v.show && v.mifObj.showObj === v) {
+                        for(let e of v.elDomFun){
+                            e.false();
+                        }
+                        for(let s of v.elDom){
+                            this.removeLabelElement(s);
+                        }
                         let after = v.replace;
-                        for(let e of v.elDom){
+                        for(let e of v.elDomFun){
+                            e.true();
+                        }
+                        for (let e of v.elDom) {
                             this.insertAfter(e, after);
                             after = e;
                         }
@@ -539,14 +537,21 @@
                 }
             },
 
-
             /**
              *  解析主键m-if显示元素
              * @param mifObj
              */
+
             parseMIFDomClassify: function (mifObj) {
                 let d = mifObj.val;
+                let obj = null;
                 if (mifObj.showObj) {
+                    if(mifObj.showObj.noElDomFun) {
+                        this.runFunction(mifObj.showObj.noElDomFun.false);
+                    }
+                    for(let e of mifObj.showObj.elDomFun){
+                        e.false();
+                    }
                     for(let s of mifObj.showObj.elDom){
                         this.removeLabelElement(s);
                     }
@@ -554,16 +559,34 @@
                 }
                 for (let i = 0; i < d.length; i++) {
                     let v = d[i];
-                    if (v.show || v.name === 'm-else') {
+                    if ((v.show || v.name === 'm-else') && (!obj)) {
                         let after = v.replace;
-                        for(let e of v.elDom){
+                        if(v.noElDomFun) {
+                            this.runFunction(v.noElDomFun.true);
+                        }
+                        for (let e of v.elDomFun) {
+                            e.true();
+                        }
+                        for (let e of v.elDom) {
                             this.insertAfter(e, after);
                             after = e;
                         }
                         mifObj.showObj = v;
-                        return v.elDom;
+                        obj =  [v];
+                        if(!v.firstTime) {
+                            v.firstTime = true;
+                        }
+                    }else{
+                        if(!v.firstTime){
+                            v.firstTime = true;
+                            for(let e of v.elDomFun){
+                                e.false();
+
+                            }
+                        }
                     }
                 }
+                return obj;
             },
 
             /**
@@ -613,8 +636,7 @@
              */
             parseMIFGroupingObj: function (domArr, comObj) {
                 for (let d of domArr) {
-                    for (let v of d) {
-                        v.elDom = [];
+                    for (let v of d.val) {
                         v.mifObj = d;
                         this.parseAllTypeLabel(v.el, comObj,
                             function (slotObj) {
@@ -694,7 +716,7 @@
                         c.removeAttribute('m-if');
                         flag = true;
                         if (c === doms[doms.length - 1]) {
-                            domArr.push({ifs});
+                            domArr.push(ifs);
                         }
                     }
                 }
@@ -705,25 +727,44 @@
              * 重组m-if分组对象
              * @param domArr
              */
-            regroupMIFGroupingObj: function (domArr) {
+            regroupMIFGroupingObjBefore: function (domArr) {
                 let arr = [];
                 for (let a of domArr) {
                     let obj = {};
                     if (a.length > 0) {
-                        obj.val = a;
-                        for(let v of obj.val){
-                            if(v.elDom.length > 0) {
-                                v.replace = document.createTextNode('');
-                                this.insertBefore(v.replace, v.elDom[0]);
-                                for(let e of v.elDom){
-                                    this.removeLabelElement(e);
-                                }
-                            }
+                        for(const c of a){
+                            c.elDom = [];
+                            c.elDomFun = [];
                         }
+                        obj.val = a;
                         arr.push(obj);
                     }
                 }
                 return arr;
+            },
+
+            /**
+             * 重组m-if分组对象
+             * @param domArr
+             * @returns {[]}
+             */
+            regroupMIFGroupingObjAfter: function (domArr) {
+                for (let a of domArr) {
+                    for(let v of a.val){
+                        if(v.elDomFun.length > 0){
+                            for(let e of v.elDomFun){
+                                e.delete();
+                            }
+                        }
+                        if(v.elDom.length > 0) {
+                            v.replace = document.createTextNode('');
+                            this.insertBefore(v.replace, v.elDom[0]);
+                            for(let e of v.elDom){
+                                this.removeLabelElement(e);
+                            }
+                        }
+                    }
+                }
             },
 
 
@@ -733,11 +774,17 @@
              * @param comObj
              */
             parseComponentChildLabelMIF: function (dom, comObj) {
-                let child = dom.children;
+                let child;
+                if(dom.constructor === Array){
+                    child = dom;
+                }else{
+                    child = dom.children;
+                }
                 //解析m-if分组
                 let domArr = this.parseMIFGrouping(child);
-                this.parseMIFGroupingObj(domArr, comObj);
-                let arr = this.regroupMIFGroupingObj(domArr);
+                let arr = this.regroupMIFGroupingObjBefore(domArr);
+                this.parseMIFGroupingObj(arr, comObj);
+                this.regroupMIFGroupingObjAfter(arr);
                 //更新m-if显示视图
                 let ar = this.updateMIFDom(arr, comObj);
                 return ar;
@@ -985,9 +1032,12 @@
              * @param dom  被节点标签
              * @param comObj 组件对象
              */
-            parseComponentSlot: function (dom, comObj) {
+            parseComponentSlot: function (dom, comObj, flag) {
                 let labelName = dom.tagName.toLowerCase();
                 if (labelName === 'slot') {
+                    if(flag){
+                        return true;
+                    }
                     let slotObj = {};
                     let attrs = dom.attributes;
                     //插槽属性解析
@@ -1103,7 +1153,7 @@
             },
 
             /**
-             *
+             * 判断if对象是否有slot
              * @param ifSlots
              * @param slot
              * @returns {string|null}
@@ -1113,7 +1163,7 @@
                     for(let i of ifSlots){
                         for(let t of i.slot){
                             if(t === slot){
-                                return i.elDom;
+                                return i;
                             }
                         }
                     }
@@ -1122,7 +1172,7 @@
             },
 
             /**
-             *
+             * 判断if对象是否存在dom
              * @param domArr
              * @param dom
              * @returns {any|null}
@@ -1130,7 +1180,7 @@
             ifLabelFind: function (domArr, dom) {
                 if(domArr){
                     for(let i of domArr){
-                        for(let t of i){
+                        for(let t of i.val){
                             if(t.el === dom){
                                 return t;
                             }
@@ -1149,9 +1199,18 @@
             componentSlotReplace: function (dom, comObj, parentCom) {
                 //查找标签的m-slot
                 let arrObj = this.searchLabelMSlot(dom);
+                let saveArr = {};
+                for (const [name, val] of Object.entries(arrObj)) {
+                    saveArr[name] = {
+                        num: 0
+                    }
+                    console.log(name, val.dom.length)
+                }
                 let child = dom.children;
                 //解析m-if分组
                 let domArr = this.parseMIFGrouping(child);
+                domArr = this.regroupMIFGroupingObjBefore(domArr);
+
                 //清空if传递的elDom
                 let ifSlots = comObj.$ifSlots;
                 if(ifSlots){
@@ -1159,115 +1218,224 @@
                         i.elDom = [];
                     }
                 }
-                console.log(comObj.$slots);
-                console.log(arrObj);
                 //替换插槽
                 for (const [name, slot] of Object.entries(comObj.$slots)) {
                     //通过名称获取插槽对象
                     let obj = arrObj[name];
-                    let slotDomArr = [];
-                    for (const s of slot) {
-                        let elArr = this.ifSlotsFind(ifSlots, s);
-                        let that = this;
-                        let dom = s.dom;
-                        if (obj) {
-                            if (slotDomArr.length === 0) {
-                                for (const d of obj.dom) {
-                                    let ifObj = this.ifLabelFind(domArr, d);
-                                    //解析dom并添加额外数据
-                                    this.parseComponentAndAddObjData(d, parentCom, s[obj.value], null, function (com) {
+                    let that = this;
+                    //有对应的插槽内容
+                    if(obj && slot.length > 0){
+                        //替换插槽
+                        for(const s of slot) {
+                            //检测当前元素的插槽是否有判断标签
+                            let elArr = this.ifSlotsFind(ifSlots, s);
+                            let doms = [];
+                            for(const d of obj.dom){
+                                doms.push(this.createNewDom(d))
+                            }
+                            //解析标签
+                            for (let i = 0; i < doms.length; i++) {
+                                let d = doms[i];
+                                let slotDomArr = [];
+                                //解析dom并添加额外数据
+                                this.parseComponentAndAddObjData(d, parentCom, s[obj.value],
+                                    {
+                                        on: true
+                                    }, function (com) {
                                         slotDomArr.push(com.elDom);
-                                        if(elArr){
-                                            elArr.push(com.elDom);
-                                        }else{
-                                            that.insertBefore(com.elDom, dom);
-                                            if(ifObj){
-                                                ifObj.elDom = new Array(com.elDom);
-                                            }
-                                        }
                                     }, function (d) {
                                         slotDomArr.push(d);
-                                        if(elArr){
-                                            elArr.push(d);
-                                        }else {
-                                            that.insertBefore(d, dom);
-                                            if(ifObj){
-                                                ifObj.elDom = new Array(d);
-                                            }
-                                        }
                                     }, function (obj) {
-                                        let d = dom;
-                                        for (const c of obj.doms) {
-                                            if(elArr){
-                                                elArr.push(c);
-                                            }else{
-                                                that.insertAfter(c, d);
-                                                if(ifObj){
-                                                    if(ifObj.elDom){
-                                                        ifObj.elDom.push(c);
-                                                    }else {
-                                                        ifObj.elDom = new Array(c);
+                                        slotDomArr = obj.doms;
+                                    });
+                                for (const c of slotDomArr) {
+                                    //检测当前dom元素是否有判断标签
+                                    let t = this.ifLabelFind(domArr, obj.dom[i])
+                                    let d = c;
+
+                                    //插槽有判断标签
+                                    if (elArr) {
+                                        let index = elArr.elDom.length;
+                                        elArr.elDom.push(d);
+                                        if (t) {
+                                            this.readMIfElDomFun(t, index, d, elArr.elDom,
+                                            function () {
+                                                //上一是如果使用默认了默认插槽的值，这里就要先删除默认插槽的dom元素
+                                                if(saveArr[name].num <= 0 && s.parseFlag){
+                                                    that.addDefaultSlotLabel(s, false);
+                                                }
+                                                //增加替换插槽的数量
+                                                saveArr[name].num++;
+                                                //删除if默认插槽使用对象
+                                                if(elArr.noElDomFun){
+                                                    elArr.noElDomFun = null;
+                                                }
+                                            }, function () {
+                                                //插槽替换dom减一，如果为0，替换为默认插槽的值
+                                                if (--saveArr[name].num <= 0) {
+                                                    //检测插槽默认值是否解析了，没有则解析
+                                                    if(!s.parseFlag){
+                                                        that.parseDefaultSlotLabel(s, comObj);
+                                                        s.dom = elArr.replace;
+                                                    }
+                                                    //判断当前插槽是否显示如果显示就显示默认插槽的元素
+                                                    if(elArr === elArr.mifObj.showObj){
+                                                        that.addDefaultSlotLabel(s, true);
+                                                    }
+                                                    //插槽没有替换元素是使用增加默认插槽的添加和删除
+                                                    elArr.noElDomFun = {
+                                                        true: function () {
+                                                            that.addDefaultSlotLabel(s, true);
+                                                        },
+                                                        false: function () {
+                                                            that.addDefaultSlotLabel(s, false);
+                                                        }
                                                     }
                                                 }
-                                                d = c;
-                                            }
-                                            slotDomArr.push(c);
+                                            });
                                         }
-                                    });
-                                }
-                            } else {
-                                let arr1 = this.copyObject(domArr);
-                                for (const c of slotDomArr) {
-                                    let d = this.createNewDom(c);
-                                    if(elArr){
-                                        elArr.push(d);
-                                    }else{
-                                        that.insertBefore(d, dom);
+                                    } else {
+                                        //插槽没有判断标签
+                                        that.insertBefore(d, s.dom);
+                                        //替换元素有判断标签
+                                        if (t) {
+                                            let replace = document.createTextNode('');
+                                            this.insertBefore(replace, d);
+                                            //增加判断运行步骤
+                                            t.elDomFun.push({
+                                                true: function () {
+                                                    that.insertAfter(d, replace);
+                                                    if(saveArr[name].num <= 0 && s.parseFlag){
+                                                        that.addDefaultSlotLabel(s, false);
+                                                    }
+                                                    saveArr[name].num++;
+                                                },
+                                                delete: function () {
+                                                    that.removeLabelElement(d);
+                                                },
+                                                false: function () {
+                                                    this.delete();
+                                                    if (--saveArr[name].num <= 0) {
+                                                        if(!s.parseFlag){
+                                                            that.parseDefaultSlotLabel(s, comObj);
+                                                            s.dom = replace;
+                                                        }
+                                                        that.addDefaultSlotLabel(s, true);
+                                                    }
+                                                }
+                                            });
+                                        }
                                     }
                                 }
-                            }
-                        } else {
-                            //使用插槽默认值
-                            let childs = dom.children;
-                            for (let i = 0; i < childs.length; i++) {
-                                let child = childs[i];
-                                this.parseAllTypeLabel(child, comObj, null, function (com) {
-                                    //组件模板替换
-                                    that.insertBefore(com.elDom, dom);
-                                }, function (d) {
-                                    that.insertBefore(d, dom);
-                                }, function (obj) {
-                                    let d = dom;
-                                    for (const c of obj.doms) {
-                                        that.insertAfter(c, d);
-                                        d = c;
-                                    }
-                                });
-                                i--;
                             }
                         }
-                        this.deleteDomThis(dom);
+                    }else{
+                        //使用插槽默认值
+                        for(const s of slot) {
+                            //解析插槽默认值
+                            this.parseDefaultSlotLabel(s, comObj);
+                            this.addDefaultSlotLabel(s, true);
+                        }
+                    }
+                    //删除所有的插槽标签
+                    for(const s of slot){
+                        this.deleteDomThis(s.dom);
                     }
                 }
                 //更新m-if显示视图
-                let arr = this.regroupMIFGroupingObj(domArr);
-                this.updateMIFDom(arr, parentCom);
-                //
-                let parseMifObj = [];
+                this.regroupMIFGroupingObjAfter(domArr);
+                this.updateMIFDom(domArr, parentCom);
+                //重新判断
                 if(ifSlots) {
                     for(let i of ifSlots){
-                        let f = true;
-                        for(const p of parseMifObj){
-                            if(i.mifObj === p){
-                                f = false;
-                                break;
-                            }
-                        }
-                        if(f){
-                            this.parseMIFDomClassifyOrdinary(i.mifObj);
+                        this.parseMIFDomShow(i);
+                    }
+                }
+            },
+
+            /**
+             * 显示或隐藏插槽默认元素
+             * @param slot
+             * @param flag
+             */
+            addDefaultSlotLabel: function (slot, flag) {
+                if(flag){
+                    let dom = slot.dom;
+                    for(const c of slot.parseElDom){
+                        this.insertBefore(c, dom);
+                    }
+                }else {
+                    for(const c of slot.parseElDom){
+                        this.removeLabelElement(c);
+                    }
+                }
+            },
+
+            /**
+             * 解析插槽默认元素
+             * @param dom
+             * @param replace
+             */
+            parseDefaultSlotLabel: function (slot, comObj) {
+                let childs = slot.dom.children;
+                slot.parseElDom = [];
+                slot.parseFlag = true;
+                //解析m-if分组
+                let domArr = this.parseMIFGrouping(childs);
+                domArr = this.regroupMIFGroupingObjBefore(domArr);
+                for (let i = 0; i < childs.length; i++) {
+                    let child = childs[i];
+                    let parseArr = [];
+                    let t = this.ifLabelFind(domArr, child);
+                    this.parseAllTypeLabel(child, comObj, {on: true},
+                        function (com) {
+                        //组件模板替换
+                        parseArr.push(com.elDom);
+                    }, function (dom) {
+                        parseArr.push(dom);
+                    }, function (forObj) {
+                        parseArr = forObj.doms;
+                        i += forObj.num == 0 ? 0 : forObj.num - 1;
+                    });
+                    for(const d of parseArr){
+                        if(t){
+                            let index = slot.parseElDom.length;
+                            slot.parseElDom.push(d);
+                            this.readMIfElDomFun(t, index, d, slot.parseElDom);
+                        }else{
+                            slot.parseElDom.push(d);
                         }
                     }
                 }
+                //更新m-if显示视图
+                this.regroupMIFGroupingObjAfter(domArr);
+                this.updateMIFDom(domArr, comObj);
+            },
+
+            /**
+             *
+             * @param t
+             * @param index
+             * @param d
+             */
+            readMIfElDomFun: function (t, index, d, arr, trueFun, falseFun) {
+                let that = this;
+                let replace = document.createTextNode('');
+                t.elDomFun.push({
+                    true: function () {
+                        arr[index] = d;
+                        that.replaceLabelElement(d, replace);
+                        that.runFunction(trueFun);
+                    },
+                    delete: function () {
+                        arr[index] = replace;
+                        that.replaceLabelElement(replace, d);
+                    },
+                    false:function () {
+                        this.delete();
+                        that.runFunction(falseFun);
+                    }
+                });
             },
 
             /**
@@ -1717,7 +1885,9 @@
                         comObj.$refs[attr.value] = arr;
                     }
                     //删除dom属性
-                    dom.removeAttribute('ref');
+                    if(dom.constructor === HTMLHeadingElement){
+                        dom.removeAttribute('ref');
+                    }
                 }
             },
             //组件样式初始化
