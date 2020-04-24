@@ -196,11 +196,53 @@
                 }
                 return prototypesObj;
             },
+
+            /**
+             * 引入组件添加的css文件和js
+             * @param comObj
+             */
+            inputJsAndCssUrl: function (comObj) {
+                if(comObj){
+                    let input = comObj.input;
+                    if(input){
+                        this.inputCssOrJs(input.css, 0);
+                        this.inputCssOrJs(input.js, 1);
+                    }
+                }
+            },
+            /**
+             * 引入js或css
+             * @param value
+             * @param type 1: js 0:css
+             */
+            inputCssOrJs: function (value, type) {
+                if(value){
+                    if(value.constructor === String){
+                        value = [value];
+                    }
+                    if(value.constructor === Array) {
+                        let head = document.querySelector('head');
+                        let labelName = type === 0 ? 'link' : 'script';
+                        for (const s of value) {
+                            let label = this.createLabel(labelName);
+                            if (type === 0) {
+                                label.setAttribute('rel', 'stylesheet');
+                                label.setAttribute('href', s);
+                            } else if (type === 1) {
+                                label.setAttribute('type', 'text/javascript');
+                                label.setAttribute('src', s);
+                            }
+                            head.appendChild(label);
+                        }
+                    }
+                }
+            },
             /**
              * 组件加载完成
              * @param comObj
              */
             componentLoad: function (comObj) {
+                this.inputJsAndCssUrl(comObj);
                 comObj.mounted();
                 comObj.$root = Main.$root;
                 //运行插件添加组件方法
@@ -1076,7 +1118,6 @@
                                 parameters[i] = parameters[i].trim();
                             }
                             this.depNamesDispose(function (object, key, parameterObj) {
-                                console.log(key);
                                 new Subscriber(object, key, function () {
                                     for(const d of obj.doms){
                                         that.removeLabelElement(d);

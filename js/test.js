@@ -48,39 +48,8 @@ function observe(obj) {
     })
 }
 
-observe(obj);
-
-let dd = obj.data
-
-console.log(dd);
-
 let cc = 123
-
-
-function watchChange(object, onChange) {
-    const handler = {
-        defineProperty(target, property, descriptor) {
-            onChange()
-            return Reflect.defineProperty(target, property, descriptor)
-        },
-        deleteProperty(target, property) {
-            onChange()
-            return Reflect.deleteProperty(target, property)
-        },
-    }
-
-    return new Proxy(object, handler)
-}
-let f = watchChange(123, () => {
-    console.log('changed')
-})
-console.log(f);
-
-
-function f1() {
-    this.aa = 45;
-    console.log(aa);
-}
+console.log('test')
 
 // let cc = {
 //     aa: 12,
