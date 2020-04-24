@@ -7,6 +7,7 @@
 <body>
 
 <div id="app">
+    <p m-if="flag" m-for="v in classNames[0]">{{v + 'abc' + aa}}1212</p>
     <h1 m-if="flag" ref="h1" m-attr:aa="aa">
         <input type="text" m-attr:value="aa">
     </h1>
@@ -82,6 +83,7 @@
 <!--    1212{{aa}}78-->
 <!--</div>-->
 <script src="module/swiper.js"></script>
+<script src="module/router.js"></script>
 <script src="js/main.js"></script>
 <script>
     //注册全局组件
@@ -93,15 +95,11 @@
                      </div>
                 `,
     });
+
+    Main.use(router);
     let map = new Map();
     map.set('c', 'cc');
     map.set('dd', 'aa');
-
-    //m-if 对应 js if
-    //m-elif 对应 js else if
-    //m-else 对应 js  else
-
-    // eval('console.log(123 + 456 + aa)')
 
     let main = new Main({
         el: '#app',
@@ -127,6 +125,7 @@
         },
         components: {
             swiper: swiper,
+            router: new router(),
             cc:{
                 name: 'cc',
                 style: {
