@@ -503,14 +503,23 @@
                 //解析组件文本
                 this.parseComponentText(dom, comObj);
 
+                this.parseEditableLabel(dom, comObj);
+
                 //解析组件子标签的m-if m-elif m-else
                 let ifArr = this.parseComponentChildLabelMIF(dom, comObj);
                 //解析组件dom的子dom
                 this.parseComponentDomChild(dom, comObj, ifArr);
             },
 
+            /**
+             * 解析可编辑标签实现数据绑定
+             * @param dom
+             * @param comObj
+             */
             parseEditableLabel: function (dom, comObj) {
-
+                if(dom){
+                    // console.log(dom.tagName.toLocaleLowerCase());
+                }
             },
 
 
@@ -1319,7 +1328,7 @@
                         names.splice(a, 1);
                     }
                     for (let i = 0; i < names.length; i += 2) {
-                        fun(names[i], names[i + 1], parameterObj);
+                        fun(names[i], names[i + 1], parameterObj, names.length);
                     }
                 }
             },
@@ -2191,9 +2200,18 @@
             parseComponentMJs: function (attr, dom, comObj) {
                 this.parseAttrMJS(attr, function (obj) {
                     //添加属性事件
-                    dom['on' + obj.incidentName] = function () {
+                    let f = function () {
                         if (comObj[obj.value]) {
                             comObj[obj.value]();
+                        }
+                    }
+                    if(!dom['on' + obj.incidentName]){
+                        dom.oninput = f;
+                    }else{
+                        let f1 = dom['on' + obj.incidentName];
+                        dom.oninput = function () {
+                            f1();
+                            f();
                         }
                     }
                     //删除属性
@@ -2267,7 +2285,21 @@
                     let runObj = this.parseFrameString(comObj, obj.value);
                     //特殊属性处理
                     let that = this;
-                    this.depNamesDispose(function (object, key, parameterObj) {
+                    this.depNamesDispose(function (object, key, parameterObj, length) {
+                        if(length === 2 && obj.incidentName === 'value' && dom.tagName.toLocaleLowerCase() === 'input'){
+                            let f = function () {
+                                object[key] = dom.value;
+                            }
+                            if(!dom.oninput){
+                                dom.oninput = f;
+                            }else{
+                                let f1 = dom.oninput;
+                                dom.oninput = function () {
+                                    f1();
+                                    f();
+                                }
+                            }
+                        }
                         new Subscriber(object, key, function () {
                             let value = that.parseSpecialMAttrString(obj.incidentName, dom, that.parseFrameString(parameterObj, obj.value), runObj);
                             runObj = value;
