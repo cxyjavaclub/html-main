@@ -7,27 +7,34 @@
 <body>
 
 <div id="app">
-    <p m-if="flag" m-for="v in classNames[0]">{{v + 'abc' + aa}}1212</p>
-    <h1 m-if="flag" ref="h1" m-attr:aa="aa">
-        <textarea>{{aa}}</textarea>
-        <input type="text" m-attr:value="aa">
-    </h1>
-    1212
-    <h1 m-elif="flag" m-attr:aa="aa">2</h1>
-    <swiper ref="swiper" m-attr:aa="getStr" time="3200" m-attr:cc="aa" m-js:click="swiperH1Click">
-        <p m-if="flag" m-attr:aa="aa">
-            <span>12</span>
-            <span>14</span>
-        </p>
-        <div m-slot:div="num">
-            {{num}}
-            abc
-        </div>
-        <p m-if="flag1">123456</p>
-        <div m-else m-slot:new>
-            258abc147
-        </div>
-    </swiper>
+    <div m-for="value">
+
+    </div>
+<!--        <questions m-for="" m-attr:serialNumber="一" topicSplit="、" topic="选择题" ></questions>-->
+<!--    <p m-for="(value, index) in classNames">{{getSelect(index) + '、'}}选择题</p>-->
+<!--    <h1 ><span>学号</span> <input type="text" m-attr:value="studentNumber"></h1>-->
+<!--    <button m-js:click="buttonClick1">提交</button>-->
+<!--    <p m-if="flag" m-for="v in classNames[0]">{{v + 'abc' + aa}}1212</p>-->
+<!--    <h1 m-if="flag" ref="h1" m-attr:aa="aa">-->
+<!--        <textarea>{{aa}}</textarea>-->
+<!--        <input type="text" m-attr:value="aa">-->
+<!--    </h1>-->
+<!--    1212-->
+<!--    <h1 m-elif="flag" m-attr:aa="aa">2</h1>-->
+<!--    <swiper ref="swiper" m-attr:aa="getStr" time="3200" m-attr:cc="aa" m-js:click="swiperH1Click">-->
+<!--        <p m-if="flag" m-attr:aa="aa">-->
+<!--            <span>12</span>-->
+<!--            <span>14</span>-->
+<!--        </p>-->
+<!--        <div m-slot:div="num">-->
+<!--            {{num}}-->
+<!--            abc-->
+<!--        </div>-->
+<!--        <p m-if="flag1">123456</p>-->
+<!--        <div m-else m-slot:new>-->
+<!--            258abc147-->
+<!--        </div>-->
+<!--    </swiper>-->
 
 <!--    <h1 m-elif="aa">2</h1>-->
 <!--    <h1 m-else>3</h1>-->
@@ -85,6 +92,7 @@
 <!--</div>-->
 <script src="module/swiper.js"></script>
 <script src="module/router.js"></script>
+<script src="module/questions.js"></script>
 <script src="js/main.js"></script>
 <script>
     //注册全局组件
@@ -96,6 +104,7 @@
                      </div>
                 `,
     });
+    Main.component(questions);
 
     Main.use(router);
     let map = new Map();
@@ -116,7 +125,8 @@
             imgUrl: 'img/1.jpg',
             map: map,
             item: 345,
-            classNames:[12, 45],
+            classNames:[12, 45, 46],
+            studentNumber: null,
             obj: {
                 color: 'red',
                 cc: {
@@ -170,6 +180,9 @@
             }
         },
         methods:{
+            buttonClick1: function () {
+                console.log(this.studentNumber)
+            },
             aaa: function (a, b, c) {
                 console.log(this);
                 console.log(a);
@@ -185,7 +198,7 @@
             },
             buttonClick: function () {
                 // this.style = {color: 'red', fontSize: '50px'};
-                this.imgUrl = 'http://gtd.alicdn.com/tfscom/TB1OySRSHrpK1RjSZTEwu3WAVXa';
+                // this.imgUrl = 'http://gtd.alicdn.com/tfscom/TB1OySRSHrpK1RjSZTEwu3WAVXa';
             },
             getTest: function () {
                 console.log(this)
@@ -193,7 +206,11 @@
             },
             refTest: function () {
                 this.$refs.h1[0].style.color = 'red';
+            },
+            getSelect: function (num) {
+                return String.fromCharCode(num + 17 + 48);
             }
+
         },
         computes:{
             getStr: {
@@ -203,7 +220,8 @@
                 set: function (value) {
                     return value;
                 }
-            }
+            },
+
             // getStr: function () {
             //     return this.imgUrl + this.aa + this.obj.cc.aa;
             // }

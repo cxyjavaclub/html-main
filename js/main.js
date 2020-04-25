@@ -457,6 +457,7 @@
 
                     //格式组件的props
                     this.formatComponentProps(copyCom);
+                    console.log(copyCom.props);
 
                     //解析组件标签的属性
                     this.parseComponentLabelAttr(comLabel, parentCom, copyCom);
@@ -2205,11 +2206,12 @@
                             comObj[obj.value]();
                         }
                     }
+
                     if(!dom['on' + obj.incidentName]){
-                        dom.oninput = f;
+                        dom['on' + obj.incidentName] = f;
                     }else{
                         let f1 = dom['on' + obj.incidentName];
-                        dom.oninput = function () {
+                        dom['on' + obj.incidentName] = function () {
                             f1();
                             f();
                         }
@@ -2338,6 +2340,7 @@
              * @param parentComObj
              */
             addComponentLabelAttr: function (name, value, type, comObj, parentComObj) {
+                console.log(name);
                 let flag = this.parseComponentProps(name, value, type, comObj, parentComObj);
                 if (!flag) {
                     let dom = comObj.elDom;
