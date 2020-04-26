@@ -7,9 +7,14 @@
 <body>
 
 <div id="app">
-    <div m-for="value">
-
+    <div m-for="(v, index) in 2">
+        <div m-for="(i, ind) in 2">
+            <div m-attr:style="{backgroundColor: aa == ind ? 'red' : 'blue'}">
+                1212
+            </div>
+        </div>
     </div>
+
 <!--        <questions m-for="" m-attr:serialNumber="一" topicSplit="、" topic="选择题" ></questions>-->
 <!--    <p m-for="(value, index) in classNames">{{getSelect(index) + '、'}}选择题</p>-->
 <!--    <h1 ><span>学号</span> <input type="text" m-attr:value="studentNumber"></h1>-->
@@ -104,7 +109,6 @@
                      </div>
                 `,
     });
-    Main.component(questions);
 
     Main.use(router);
     let map = new Map();
@@ -180,8 +184,8 @@
             }
         },
         methods:{
-            buttonClick1: function () {
-                console.log(this.studentNumber)
+            buttonClick1: function (dom) {
+                console.log(dom)
             },
             aaa: function (a, b, c) {
                 console.log(this);

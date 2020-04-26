@@ -1029,8 +1029,8 @@
                         delete comObj.parseAddObjData;
                     } else {
                         for (const [name] of Object.entries(addObjData)) {
-                            delete comObj[name];
-                            delete comObj.parseAddObjData[name]
+                            // delete comObj[name];
+                            // delete comObj.parseAddObjData[name]
                         }
                         for (const [name, value] of Object.entries(obj)) {
                             comObj.parseAddObjData[name] = value;
@@ -2203,7 +2203,7 @@
                     //添加属性事件
                     let f = function () {
                         if (comObj[obj.value]) {
-                            comObj[obj.value]();
+                            comObj[obj.value](dom);
                         }
                     }
 
@@ -2302,7 +2302,11 @@
                                 }
                             }
                         }
+                        console.log(parameterObj);
+                        console.log(key);
+                        console.log(comObj.parseAddObjData);
                         new Subscriber(object, key, function () {
+                            console.log(parameterObj);
                             let value = that.parseSpecialMAttrString(obj.incidentName, dom, that.parseFrameString(parameterObj, obj.value), runObj);
                             runObj = value;
                             that.addDomAttr(dom, obj.incidentName, value);
@@ -2340,7 +2344,6 @@
              * @param parentComObj
              */
             addComponentLabelAttr: function (name, value, type, comObj, parentComObj) {
-                console.log(name);
                 let flag = this.parseComponentProps(name, value, type, comObj, parentComObj);
                 if (!flag) {
                     let dom = comObj.elDom;
