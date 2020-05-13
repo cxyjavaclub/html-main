@@ -6,7 +6,6 @@
         },
         template:`
             <div>
-<!--                {{serialNumber}}{{topicSplit}}<h1>{{topic}}</h1>-->
                 <slot></slot>
                 {{topic}}
             </div>

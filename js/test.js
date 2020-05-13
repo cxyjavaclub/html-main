@@ -49,7 +49,7 @@ function observe(obj) {
 }
 
 let cc = 123
-console.log('test')
+// console.log('test')
 
 // let cc = {
 //     aa: 12,

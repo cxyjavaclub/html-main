@@ -7,23 +7,15 @@
 <body>
 
 <div id="app">
-    <div m-for="(v, index) in 2">
-        <div m-for="(i, ind) in 2">
-            <div m-attr:style="{backgroundColor: aa == ind ? 'red' : 'blue'}">
-                1212
-            </div>
-        </div>
-    </div>
-
-<!--        <questions m-for="" m-attr:serialNumber="一" topicSplit="、" topic="选择题" ></questions>-->
-<!--    <p m-for="(value, index) in classNames">{{getSelect(index) + '、'}}选择题</p>-->
-<!--    <h1 ><span>学号</span> <input type="text" m-attr:value="studentNumber"></h1>-->
-<!--    <button m-js:click="buttonClick1">提交</button>-->
 <!--    <p m-if="flag" m-for="v in classNames[0]">{{v + 'abc' + aa}}1212</p>-->
 <!--    <h1 m-if="flag" ref="h1" m-attr:aa="aa">-->
 <!--        <textarea>{{aa}}</textarea>-->
 <!--        <input type="text" m-attr:value="aa">-->
 <!--    </h1>-->
+    <p m-if="">{{getStr}}</p>
+    <p m-elif></p>
+    <questions m-attr:topic="flag"></questions>
+    <global></global>
 <!--    1212-->
 <!--    <h1 m-elif="flag" m-attr:aa="aa">2</h1>-->
 <!--    <swiper ref="swiper" m-attr:aa="getStr" time="3200" m-attr:cc="aa" m-js:click="swiperH1Click">-->
@@ -100,17 +92,18 @@
 <script src="module/questions.js"></script>
 <script src="js/main.js"></script>
 <script>
+
     //注册全局组件
-    Main.component({
-        name: 'global',
+    Main.component('global', {
         template: `
                     <div class="global">
                         我是global
                      </div>
-                `,
+                `
     });
+    Main.component('questions', questions);
 
-    Main.use(router);
+    // Main.use(router);
     let map = new Map();
     map.set('c', 'cc');
     map.set('dd', 'aa');
@@ -144,44 +137,43 @@
         },
         components: {
             swiper: swiper,
-            router: new router(),
-            cc:{
-                name: 'cc',
-                style: {
-                    scoped: true, //局部css样式
-                    value: `
-                .aa{ }   .cc    {
-                    color: blue;
-                }
-            ` //样式内容
-                },
-                template: `
-                    <div class="cc">
-                        <dd></dd>
-                        我是main的cc
-                     </div>
-                `,
-                components:{
-                    dd: {
-                        name: 'dd',
-                        style: {
-                            scoped: true, //局部css样式
-                            value: `
-                            .dd{
-                                color: red;
-                            }
-
-            ` //样式内容
-                        },
-                        template: `
-                               <div class="dd">
-                               <global></global>
-                                我是dd
-                               </div>
-                          `,
-                    }
-                }
-            }
+            // cc:{
+            //     name: 'cc',
+            //     style: {
+            //         scoped: true, //局部css样式
+            //         value: `
+            //     .aa{ }   .cc    {
+            //         color: blue;
+            //     }
+            // ` //样式内容
+            //     },
+            //     template: `
+            //         <div class="cc">
+            //             <dd></dd>
+            //             我是main的cc
+            //          </div>
+            //     `,
+            // //     components:{
+            // //         dd: {
+            // //             name: 'dd',
+            // //             style: {
+            // //                 scoped: true, //局部css样式
+            // //                 value: `
+            // //                 .dd{
+            // //                     color: red;
+            // //                 }
+            // //
+            // // ` //样式内容
+            // //             },
+            // //             template: `
+            // //                    <div class="dd">
+            // //                    <global></global>
+            // //                     我是dd
+            // //                    </div>
+            // //               `,
+            // //         }
+            // //     }
+            // }
         },
         methods:{
             buttonClick1: function (dom) {

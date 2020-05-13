@@ -48,7 +48,8 @@
 <!--                    <img m-js:click="setColor" ref="swiper-img" src="img/2.jpg">                        -->
                     <slot name="div" m-attr:num="num">                       
                         <h2>div插槽</h2>
-                   </slot>                   
+                   </slot>  
+                   <h1>{{get}}</h1>                
                    <slot m-if="flag">
                         <h2>默认插槽</h2>                       
                    </slot>  
@@ -75,16 +76,18 @@
             },
         },
         //数据
-        data:{
-            flag: true,
-            className: 'num',
-            num: 10, //轮播图片个数
-            index: 1, //当前显示图片下标
-            width: 0,// 组件宽度
-            excessTime: 0,//轮播图过度动画时间
-            pauseTime: 0,//轮播图停顿时间
-            age: {
-                time: 'age1000'
+        data: function(){
+            return {
+                flag: true,
+                className: 'num',
+                num: 10, //轮播图片个数
+                index: 1, //当前显示图片下标
+                width: 0,// 组件宽度
+                excessTime: 0,//轮播图过度动画时间
+                pauseTime: 0,//轮播图停顿时间
+                age: {
+                    time: 'age1000'
+                }
             }
         },
         //组件加载运行
@@ -120,6 +123,11 @@
                 console.log('swiper h1被点击');
                 this.age.time = '我是一个新值'
                 this.$emit('click');
+            }
+        },
+        computes:{
+            get: function () {
+                return this.age.time;
             }
         }
     }

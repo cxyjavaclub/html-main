@@ -7,14 +7,11 @@
      * components：组件注册属性 as Object
      */
     function Main(obj) {
-        /**
-         * 解析组件状态 0：增加全局组件 1：解析并显示
-         * @type {number}
-         */
-        Main.paserComponentType = 1;
         let com = MainTool.methods._init(obj);
         //添加样式
-        MainTool.methods.addStyleToHead(com.style.value);
+        if(com.style && com.style.value){
+            MainTool.methods.addStyleToHead(com.style.value);
+        }
         return com;
     }
 
@@ -32,13 +29,11 @@
      * 注册全局组件
      * @param com
      */
-    Main.component = function (com) {
-        //解析组件状态
-        Main.paserComponentType = 0;
+    Main.component = function (name, com) {
         //初始化组件
-        let newCom = MainTool.methods._init(com);
+        MainTool.methods.initComponent(com);
         //写入全局组件
-        Main.globalComponents[newCom.name] = newCom;
+        Main.globalComponents[name] = com;
     };
 
     /**
@@ -109,8 +104,6 @@
      * 组件原型
      */
     let MainPrototypes = {
-        name: 'Main',
-
         //选择器
         el: null,
 
@@ -130,12 +123,18 @@
         childrenDom: new Map(),
 
         //数据集
-        data: {},
+        data: function () {
+            return {};
+        },
         //存储ref名称dom集合
-        $refs: {},
+        $refs: function () {
+            return {};
+        },
 
         //存储插槽对象
-        $slots: {},
+        $slots: function () {
+            return {};
+        },
 
         //计算属性
         computes: {},
@@ -148,7 +147,9 @@
         },
 
         //自定义事件集合
-        $emits: {},
+        $emits: function () {
+            return {};
+        },
 
         // 样式属性
         style: {
@@ -163,6 +164,10 @@
         mounted: function () {
 
         },
+        //渲染组件之前运行的运行函数
+        created: function(){
+
+        },
 
         //组件相关函数对象
         methods: {}
@@ -175,120 +180,125 @@
     let MainTool = {
         //方法
         methods: {
-            //合并配置并生成新的组件
+//===========================================================================
+            /**
+             * 组件初始化
+             * @param obj
+             */
+            //将组件里的子组件转换为组件原型
+            childComponentToPrototypes: function (newCom) {
+                for (const [name, value] of Object.entries(newCom.children)) {
+                    let com = this.mergeConfig(value);
+                    newCom.children[name] = com;
+                }
+            },
+
+            /**
+             * 组件重组
+             * @param obj
+             */
             mergeConfig: function (obj) {
-                //生成新的组件原型
-                let prototypesObj = {};
-                this.copyObject(prototypesObj, MainPrototypes);
+                //添加el
+                if(!obj.el){
+                    obj.el = null;
+                }
+
+                //添加elDom
+                if(!obj.elDom){
+                    obj.elDom = null;
+                }
+                //组件值传递挂载对象
+                if(!obj.props){
+                    obj.props = {};
+                }
+
+                //所有的子组件
                 //将components写入children属性
                 if (obj.components) {
                     obj.children = obj.components;
+                    delete obj.components
+                }else{
+                    obj.children = [];
                 }
-                //合并配置
-                for (const [name, value] of Object.entries(obj)) {
-                    if (prototypesObj[name] && value.constructor === Object) {
-                        for (const v in value) {
-                            prototypesObj[name][v] = value[v];
-                        }
-                    } else {
-                        prototypesObj[name] = value;
+
+                //父组件
+                obj.parent = null;
+
+                // 子组件dom
+                obj.childrenDom = function(){
+                    return new Map();
+                }
+
+                //数据集
+                if(!obj.data){
+                    obj.data = function () {
+                        return {};
                     }
                 }
-                return prototypesObj;
+
+                //存储ref名称dom集合
+                obj.$refs = function () {
+                    return {};
+                }
+
+                //存储插槽对象
+                obj.$slots = function () {
+                    return {};
+                }
+
+                //计算属性
+                if(!obj.computes){
+                    obj.computes = {};
+                }
+
+                //发送事件函数
+                obj.$emit = function (name, ...arr) {
+                    if (this.$emits[name]) {
+                        this.$emits[name].apply(this, arr);
+                    }
+                }
+
+                //自定义事件集合
+                obj.$emits = function () {
+                    return {};
+                }
+
+                // 样式属性
+                if(!obj.style){
+                    obj.style = {
+                        scoped: true, //局部css样式
+                        value: '' //样式内容
+                    };
+                }
+
+                //html模板
+                if(!obj.template){
+                    obj.template = '';
+                }
+
+                //事件加载完成运行函数
+                if(!obj.mounted){
+                    obj.mounted = function(){};
+                }
+
+                //渲染组件之前运行的运行函数
+                if(!obj.created){
+                    obj.created = function(){};
+                }
+
+                //组件相关函数对象
+                if(!obj.methods){
+                    obj.methods = {};
+                }
             },
 
             /**
-             * 引入组件添加的css文件和js
-             * @param comObj
+             * 初始化组件,提取组件原型
+             * @param newCom
              */
-            inputJsAndCssUrl: function (comObj) {
-                if(comObj){
-                    let input = comObj.input;
-                    if(input){
-                        this.inputCssOrJs(input.css, 0);
-                        this.inputCssOrJs(input.js, 1);
-                    }
-                }
-            },
-            /**
-             * 引入js或css
-             * @param value
-             * @param type 1: js 0:css
-             */
-            inputCssOrJs: function (value, type) {
-                if(value){
-                    if(value.constructor === String){
-                        value = [value];
-                    }
-                    if(value.constructor === Array) {
-                        let head = document.querySelector('head');
-                        let labelName = type === 0 ? 'link' : 'script';
-                        for (const s of value) {
-                            let label = this.createLabel(labelName);
-                            if (type === 0) {
-                                label.setAttribute('rel', 'stylesheet');
-                                label.setAttribute('href', s);
-                            } else if (type === 1) {
-                                label.setAttribute('type', 'text/javascript');
-                                label.setAttribute('src', s);
-                            }
-                            head.appendChild(label);
-                        }
-                    }
-                }
-            },
-            /**
-             * 组件加载完成
-             * @param comObj
-             */
-            componentLoad: function (comObj) {
-                this.inputJsAndCssUrl(comObj);
-                comObj.mounted();
-                comObj.$root = Main.$root;
-                //运行插件添加组件方法
-                for(const p of Main.plugins){
-                    p.addComponent(comObj);
-                }
-            },
-            //
-            /**
-             * 解析生成新的组件
-             * @param obj
-             * @param type 为假时添加全局组件
-             * @returns {{}}
-             * @private
-             */
-            _init: function (obj, type) {
-                //合并配置并生成新的组件
-                let newCom = this.mergeConfig(obj);
-
-                //初始化组件
-                this.initComponent(newCom);
-
-                //组件重置
-                this.resetComponentObj(newCom);
-
-                //解析组件m-if
-                let mIfFlag = this.parseComponentMIF(newCom);
-                //解析所有的类型标签
-                if (mIfFlag) {
-                    //添加顶层组件
-                    if(Main.paserComponentType == 1){
-                        Main.$root = newCom;
-                    }
-                    this.parseAllTypeLabel(newCom.elDom, newCom);
-                    if(Main.paserComponentType == 1){
-                        this.componentLoad(newCom);
-                        Main.$root = null;
-                    }
-                }
-                return newCom;
-            },
-            //初始化组件
             initComponent: function (newCom) {
-
-                //将组件里的子组件转换为组件原型
-                this.childComponentToPrototypes(newCom);
+                //合并配置并生成新的组件
+                this.mergeConfig(newCom);
 
                 //检测组件是否嵌套
                 for (const [name, value] of Object.entries(newCom.children)) {
@@ -317,19 +327,135 @@
                         }
                     }
                 }
+            },
+//======================================================================
 
-                //检测dom获取
-                if (!newCom.elDom) {
-                    return false;
+            /**
+             * 组件对象重置
+             * @param storageObj
+             */
+            resetComponentObj: function (storageObj) {
+                for (const [name, value] of Object.entries(storageObj)) {
+                    if (name === 'data' || name === 'methods') {
+                        if (name === 'data') {
+                            this.observe(value);
+                        }
+                        for (const v in value) {
+                            this.resetComponentKeys(storageObj, name, v);
+                            if (name === 'data') {
+                                this.rewriteArrayPrototypeFun(value[v], value, v)
+                            }
+                        }
+                    }
+                }
+                this.resetComponentComputes(storageObj);
+                for (const [name] of Object.entries(storageObj.computes)) {
+                    this.resetComponentKeys(storageObj, 'computes', name);
                 }
             },
-            //将组件里的子组件转换为组件原型
-            childComponentToPrototypes: function (newCom) {
-                for (const [name, value] of Object.entries(newCom.children)) {
-                    let com = this.mergeConfig(value);
-                    newCom.children[name] = com;
+
+            /**
+             * 引入组件添加的css文件和js
+             * @param comObj
+             */
+            inputJsAndCssUrl: function (comObj) {
+                if(comObj){
+                    let input = comObj.input;
+                    if(input){
+                        this.inputCssOrJs(input.css, 0);
+                        this.inputCssOrJs(input.js, 1);
+                    }
                 }
             },
+
+            /**
+             * 引入js或css
+             * @param value
+             * @param type 1: js 0:css
+             */
+            inputCssOrJs: function (value, type) {
+                if(value){
+                    if(value.constructor === String){
+                        value = [value];
+                    }
+                    if(value.constructor === Array) {
+                        let head = document.querySelector('head');
+                        let labelName = type === 0 ? 'link' : 'script';
+                        for (const s of value) {
+                            let label = this.createLabel(labelName);
+                            if (type === 0) {
+                                label.setAttribute('rel', 'stylesheet');
+                                label.setAttribute('href', s);
+                            } else if (type === 1) {
+                                label.setAttribute('type', 'text/javascript');
+                                label.setAttribute('src', s);
+                            }
+                            head.appendChild(label);
+                        }
+                    }
+                }
+            },
+
+            /**
+             * 组件解析之前完成
+             */
+            componentParseFront: function (comObj) {
+                if(comObj.created){
+                    comObj.created();
+                }
+            },
+            /**
+             * 组件加载完成
+             * @param comObj
+             */
+            componentLoad: function (comObj) {
+                this.inputJsAndCssUrl(comObj);
+                if(comObj.mounted){
+                    comObj.mounted();
+                }
+                comObj.$root = Main.$root;
+                //运行插件添加组件方法
+                for(const p of Main.plugins){
+                    p.addComponent(comObj);
+                }
+            },
+
+            /**
+             * 解析生成新的组件
+             * @param obj
+             * @param type 为假时添加全局组件
+             * @returns {{}}
+             * @private
+             */
+            _init: function (obj) {
+                let newCom = obj;
+                //初始化组件
+                this.initComponent(newCom);
+
+                //通过组件原型生成组件
+                newCom = this.findPrototypeCreateComponent(newCom);
+
+                //组件重置
+                this.resetComponentObj(newCom);
+
+                //解析组件m-if
+                let mIfFlag = this.parseComponentMIF(newCom);
+                // //解析所有的类型标签
+                if (mIfFlag) {
+                    Main.$root = newCom;
+                    //首先隐藏
+                    let dom = document.createTextNode('');
+                    this.replaceLabelElement(dom, newCom.elDom);
+                    this.componentParseFront(newCom);
+                    this.parseAllTypeLabel(newCom.elDom, newCom);
+                    this.componentLoad(newCom);
+                    //解析完成显示
+                    this.replaceLabelElement(newCom.elDom, dom);
+                    Main.$root = null;
+                }
+                return newCom;
+            },
+
             /**
              * 解析组件dom的子dom
              * @param dom 必须为普通的html dom
@@ -395,15 +521,13 @@
                     let slotObj = this.parseComponentSlot(dom, comObj, funSlot && funSlot.on);
                     if (!slotObj) {
                         //通过名称获取组件
-                        let com = this.getFindNameComponent(comObj, dom.tagName);
+                        let name = dom.tagName.toLowerCase();
+                        let com = this.getFindNameComponent(comObj, name);
                         //获取到组件
                         if (com) {
+                            com.name = name;
                             //解析组件并替换
                             let newCom = this.parseComponent(com, dom, comObj);
-                            //向所有组件添加最顶层组件
-                            if(Main.paserComponentType == 1){
-                                this.componentLoad(newCom);
-                            }
                             this.runFunction(funCom, newCom);
                         } else {
                             //解析普通html标签
@@ -422,6 +546,23 @@
                     }
                 }
             },
+
+            /**
+             * 通过组件原型生成组件
+             * @param comPrototype
+             */
+            findPrototypeCreateComponent:  function (comPrototype) {
+                let com = {};
+                for(const [name, value] of Object.entries(comPrototype)){
+                    if((name === 'data' || name === '$refs' || name === '$emits' || name === '$slots' || name === 'childrenDom') && (value.constructor === Function)){
+                        com[name] = value();
+                    }else {
+                        com[name] = value;
+                    }
+                }
+                return com;
+            },
+
             /**
              *  解析组件
              * @param comPrototype
@@ -429,9 +570,11 @@
              * @param parentCom
              */
             parseComponent: function (comPrototype, comLabel, parentCom) {
+                //解析组件之前
+                this.componentParseFront(comPrototype);
+
                 //通过组件生成新的组件
-                let copyCom = {}
-                this.copyObject(copyCom, comPrototype);
+                let copyCom = this.findPrototypeCreateComponent(comPrototype);
 
                 //组件对象重置
                 this.resetComponentObj(copyCom);
@@ -439,6 +582,8 @@
                 //elDom为假
                 if(!copyCom.elDom){
                     copyCom.elDom = document.createTextNode('');
+                    //向所有组件添加最顶层组件
+                    this.componentLoad(comPrototype);
                     return copyCom;
                 }
                 //通过组件生成新的dom
@@ -457,7 +602,6 @@
 
                     //格式组件的props
                     this.formatComponentProps(copyCom);
-                    console.log(copyCom.props);
 
                     //解析组件标签的属性
                     this.parseComponentLabelAttr(comLabel, parentCom, copyCom);
@@ -473,6 +617,9 @@
 
                     //组件插槽替换
                     this.componentSlotReplace(comLabel, copyCom, parentCom);
+
+                    //向所有组件添加最顶层组件
+                    this.componentLoad(comPrototype);
                     return copyCom;
                 } else {
                     let obj = {};
@@ -1029,8 +1176,8 @@
                         delete comObj.parseAddObjData;
                     } else {
                         for (const [name] of Object.entries(addObjData)) {
-                            // delete comObj[name];
-                            // delete comObj.parseAddObjData[name]
+                            delete comObj[name];
+                            delete comObj.parseAddObjData[name]
                         }
                         for (const [name, value] of Object.entries(obj)) {
                             comObj.parseAddObjData[name] = value;
@@ -1671,30 +1818,6 @@
             },
 
             /**
-             * 组件对象重置
-             * @param storageObj
-             */
-            resetComponentObj: function (storageObj) {
-                for (const [name, value] of Object.entries(storageObj)) {
-                    if (name === 'data' || name === 'methods') {
-                        if (name === 'data') {
-                            this.observe(value);
-                        }
-                        for (const v in value) {
-                            this.resetComponentKeys(storageObj, name, v);
-                            if (name === 'data') {
-                                this.rewriteArrayPrototypeFun(value[v], value, v)
-                            }
-                        }
-                    }
-                }
-                this.resetComponentComputes(storageObj);
-                for (const [name] of Object.entries(storageObj.computes)) {
-                    this.resetComponentKeys(storageObj, 'computes', name);
-                }
-            },
-
-            /**
              * 数据劫持
              * @param obj
              * @param name
@@ -1711,7 +1834,7 @@
                         return value;
                     },
                     set: function (v) {
-                        console.log('值发生改变' + value + "----->" + v);
+                        // console.log('值发生改变' + value + "----->" + v);
                         value = v;
                         dep.runAll();
                     }
@@ -1778,7 +1901,8 @@
                             return value.call(comObj);
                         }
                     });
-                } else if (constructor === Object) {
+                }
+                else if (constructor === Object) {
                     let obj1 = {
                         enumerable: true,
                         configurable: true
@@ -1930,31 +2054,24 @@
             },
             //通过名称获取组件
             getFindNameComponent: function (newCom, name) {
-                name = name.toLowerCase();
                 let com = this.getFindNamePartComponent(newCom, name);
                 if (!com) {
-                    com = this.getFindNameGlobalComponent(newCom, name);
+                    com = this.getFindNameGlobalComponent(name);
                 }
                 return com;
             },
             //通过名称获取局部组件
             getFindNamePartComponent: function (newCom, name) {
                 //通过名称查找局部组件
-                for (let n in newCom.children) {
-                    if (name === newCom.children[n].name) {
-                        return newCom.children[n];
-                    }
-                }
+                return newCom.children[name];
             },
+
             //通过名称获取全局组件
-            getFindNameGlobalComponent: function (newCom, name) {
+            getFindNameGlobalComponent: function (name) {
                 //通过名称查找全局组件
-                for (let n in Main.globalComponents) {
-                    if (name === Main.globalComponents[n].name) {
-                        return Main.globalComponents[n];
-                    }
-                }
+                return Main.globalComponents[name];
             },
+
             //解析组件模板
             parseTemplate: function (arg, flag) {
                 let div = this.createLabel('div');
@@ -2302,9 +2419,6 @@
                                 }
                             }
                         }
-                        console.log(parameterObj);
-                        console.log(key);
-                        console.log(comObj.parseAddObjData);
                         new Subscriber(object, key, function () {
                             console.log(parameterObj);
                             let value = that.parseSpecialMAttrString(obj.incidentName, dom, that.parseFrameString(parameterObj, obj.value), runObj);
@@ -2327,9 +2441,6 @@
              */
             parseComponentLabelMAttr: function (attr, comObj, childComObj) {
                 this.parseAttrMAttr(attr, function (obj) {
-                    //得到m-attr解析值
-                    // let runObj = this.parseFrameString(comObj, obj.value);
-
                     //添加解析组件标签属性
                     this.addComponentLabelAttr(obj.incidentName, obj.value, 0, childComObj, comObj);
                 }, this);
@@ -2728,27 +2839,31 @@
                 let props = comObj.props;
                 if (props) {
                     comObj.$props = {};
-                    if (props.constructor === Array) {
-                        Object.keys(props).forEach(function (key) {
-                            comObj.$props[key] = null;
-                        });
-                    } else if (props.constructor === Object) {
-                        Object.keys(props).forEach(function (key) {
-                            comObj.$props[key] = props[key].default;
-                            if (comObj.$props[key] === undefined) {
+                    let arr = Object.keys(props);
+                    if(arr.length > 0) {
+                        if (props.constructor === Array) {
+                            Object.keys(props).forEach(function (key) {
                                 comObj.$props[key] = null;
-                            }
+                            });
+                        } else if (props.constructor === Object) {
+                            Object.keys(props).forEach(function (key) {
+                                comObj.$props[key] = null;
+                                if(props[key].constructor === Object){
+                                    let d = props[key].default;
+                                    comObj.$props[key] = d === undefined ? null : d;
+                                }
+                            });
+                        }
+                        Object.keys(comObj.$props).forEach(function (key) {
+                            Object.defineProperty(comObj, key, {
+                                enumerable: true,
+                                configurable: true,
+                                get: function proxyGetter() {
+                                    return comObj.$props[key];
+                                }
+                            });
                         });
                     }
-                    Object.keys(comObj.$props).forEach(function (key) {
-                        Object.defineProperty(comObj, key, {
-                            enumerable: true,
-                            configurable: true,
-                            get: function proxyGetter() {
-                                return comObj.$props[key];
-                            }
-                        });
-                    });
                 }
             },
             /**
