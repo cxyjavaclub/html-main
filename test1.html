@@ -1,0 +1,29 @@
+<template>
+    <div>
+        <h1 m-if="true">我是test1</h1>
+        <===========================>
+        <test2></test2>
+    </div>
+</template>
+<script>
+    let test2 = input('test2.html');
+    output = {
+        data: function () {
+            return {
+                aa: 'aa'
+            }
+        },
+        mounted: function () {
+
+        },
+        components:{
+            test2: test2
+        }
+    }
+</script>
+
+<style scoped>
+    div{
+        background-color: red;
+    }
+</style>
