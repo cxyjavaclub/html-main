@@ -7,7 +7,7 @@
 <body>
     <div id="app">
         <test1></test1>
-        <swiper m-attr:imgs="imgs"></swiper>
+        <swiper m-attr:img="img" m-attr:imgs="imgs"></swiper>
         <div>789456</div>
     </div>
 <script src="js/main.js"></script>
@@ -18,7 +18,8 @@
         el: '#app',
         data: {
             flag: true,
-            imgs:['img/1.jpg', 'img/2.jpg', 'img/3.jpg']
+            imgs:['img/1.jpg', 'img/2.jpg', 'img/3.jpg'],
+            img: 'img/3.jpg'
         },
         components:{
             test1: test1,

@@ -2,20 +2,24 @@
     <div>
         <div>
             <img m-for="v in imgs" m-attr:src="v">
+            <img  m-attr:src="img">
         </div>
     </div>
 </template>
 <script>
     output = {
+        props: {
+            img: String,
+            imgs: Array
+        },
         data: function () {
-
             return {
-                props: {
-                    imgs: {
-                        type: Array
-                    }
-                }
+
             }
+        },
+        created: function(){
+        },
+        mounted: function () {
         }
     }
 </script>

@@ -208,7 +208,7 @@
                 }
                 //组件值传递挂载对象
                 if(!obj.props){
-                    obj.props = {};
+                    obj.$props = {};
                 }
 
                 //所有的子组件
@@ -471,7 +471,7 @@
                                 //组件模板替换
                                 this.componentTemplateReplace(dom, com.elDom, child[i]);
                             }, null, function (obj) {
-                                i += obj.num == 0 ? 0 : obj.num - 1;
+                                i += obj.num == 0 ? -1 : obj.num - 1;
                             });
                         }
                     }
@@ -511,7 +511,7 @@
                     if (dom !== comObj.elDom) {
                         //解析组件标签的m-for
                         let obj = this.parseComponentLabelMFor(dom, comObj);
-                        if (obj.num > 0) {
+                        if (obj.flag > 0) {
                             this.runFunction(funMFor, obj);
                             return;
                         }
@@ -598,6 +598,7 @@
 
                     //添加组件原始dom
                     this.addComponentOriginalDom(copyCom, comLabel);
+
 
                     //格式组件的props
                     this.formatComponentProps(copyCom);
@@ -1244,10 +1245,11 @@
              * @param comObj
              */
             parseDomMFOR: function (dom, comObj) {
-                let obj = {num: 0, parseType: null, doms: []};
+                let obj = {num: 0, parseType: null, doms: [], flag: false};
                 let that = this;
                 let mForValue = dom.getAttribute('m-for');
                 if (mForValue) {
+                    obj.flag = true;
                     //删除属性
                     dom.removeAttribute('m-for');
                     let replaceDom = document.createTextNode('');
@@ -1285,13 +1287,13 @@
                                 })
                             }, comObj.parseAddObjData);
                             this.parseDomMFORValue(runValue, replaceDom, dom, parameters, obj, comObj);
-                            //删除当前节点
-                            if (dom.parentNode) {
-                                dom.parentNode.removeChild(dom);
-                            }
                         }
                     } else {
                         console.error('for格式错误：' + c.tagName);
+                    }
+                    //删除当前节点
+                    if (dom.parentNode) {
+                        dom.parentNode.removeChild(dom);
                     }
                 }
                 return obj;
@@ -2648,6 +2650,9 @@
                     //注意：实现函数里面不能读取对象里的值否则会改变Dep.names的值导致处理有问题
                     this.removeObjectAttrToGlobal(newObj, wObj);
                 } catch (e) {
+                    console.log(obj)
+                    console.log(runStr)
+                    console.log(value)
                     console.error(e);
                 }
                 return result;
@@ -2665,11 +2670,12 @@
                         obj1[key] = v;
                     }
                     try {
+                        let v = obj[key];
                         Object.defineProperty(global, key, {
                             enumerable: false,
                             configurable: true,
                             get: function proxyGetter() {
-                                return obj[key];
+                                return v;
                             },
                         });
                     } catch (e) {
@@ -2818,7 +2824,7 @@
                             let v = null;
                             if (type === 0) {
                                 v = that.parseFrameString(parentComObj, value);
-                            } else if (type === 1) {
+                            }else if (type === 1) {
                                 v = value;
                             }
                             that.depIndirectDispose(null, comObj.$props, name);
