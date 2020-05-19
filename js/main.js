@@ -718,6 +718,7 @@
                     this.parseComponentRef(a, dom, comObj);
                     //解析m-attr
                     this.parseComponentMAttr(a, dom, comObj);
+
                     //解析组件m-js
                     this.parseComponentMJs(a, dom, comObj);
                     //解析组件m-text
@@ -743,14 +744,18 @@
                         for (let e of execs) {
                             if (e && e[1]) {
                                 //解析框架字符串{{}}
+                                console.log(e[1])
+                                // console.log(comObj)
+                                console.log(this.getDepNames())
                                 let runValue = this.parseFrameString(comObj, e[1]);
+                                console.log(this.getDepNames())
                                 let text = c.textContent;
                                 let that = this;
-                                this.depNamesDispose(function (object, key, parameterObj) {
-                                    new Subscriber(object, key, function () {
-                                        c.textContent = text.replace(e[0], that.parseFrameString(parameterObj, e[1]));
-                                    })
-                                }, comObj.parseAddObjData);
+                                // this.depNamesDispose(function (object, key, parameterObj) {
+                                //     new Subscriber(object, key, function () {
+                                //         c.textContent = text.replace(e[0], that.parseFrameString(parameterObj, e[1]));
+                                //     })
+                                // }, comObj.parseAddObjData);
                                 c.textContent = text.replace(e[0], runValue);
                             }
                         }
@@ -2403,9 +2408,9 @@
                 this.parseAttrMAttr(attr, function (obj) {
                     //得到m-attr解析值
                     let runObj = this.parseFrameString(comObj, obj.value);
-                    //特殊属性处理
                     let that = this;
                     this.depNamesDispose(function (object, key, parameterObj, length) {
+
                         if(length === 2 && obj.incidentName === 'value' && dom.tagName.toLocaleLowerCase() === 'input'){
                             let f = function () {
                                 object[key] = dom.value;
@@ -2420,13 +2425,16 @@
                                 }
                             }
                         }
+
                         new Subscriber(object, key, function () {
-                            console.log(parameterObj);
+                            console.log(key);
                             let value = that.parseSpecialMAttrString(obj.incidentName, dom, that.parseFrameString(parameterObj, obj.value), runObj);
                             runObj = value;
                             that.addDomAttr(dom, obj.incidentName, value);
                         })
                     }, comObj.parseAddObjData)
+
+                    //特殊属性处理
                     runObj = this.parseSpecialMAttrString(obj.incidentName, dom, runObj);
                     //添加dom属性
                     this.addDomAttr(dom, obj.incidentName, runObj);
@@ -2650,9 +2658,6 @@
                     //注意：实现函数里面不能读取对象里的值否则会改变Dep.names的值导致处理有问题
                     this.removeObjectAttrToGlobal(newObj, wObj);
                 } catch (e) {
-                    console.log(obj)
-                    console.log(runStr)
-                    console.log(value)
                     console.error(e);
                 }
                 return result;
@@ -2670,12 +2675,11 @@
                         obj1[key] = v;
                     }
                     try {
-                        let v = obj[key];
                         Object.defineProperty(global, key, {
                             enumerable: false,
                             configurable: true,
                             get: function proxyGetter() {
-                                return v;
+                                return obj[key];
                             },
                         });
                     } catch (e) {
@@ -2823,7 +2827,7 @@
                         get: function () {
                             let v = null;
                             if (type === 0) {
-                                v = that.parseFrameString(parentComObj, value);
+                                v = parentComObj[value];
                             }else if (type === 1) {
                                 v = value;
                             }
