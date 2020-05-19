@@ -59,7 +59,6 @@
         };
         //运行所有的订阅者
         this.runAll = function () {
-            console.log(this.subs);
             this.subs.forEach(function (obj) {
                 obj.run();
             })
@@ -583,7 +582,7 @@
                 if(!copyCom.elDom){
                     copyCom.elDom = document.createTextNode('');
                     //向所有组件添加最顶层组件
-                    this.componentLoad(comPrototype);
+                    this.componentLoad(copyCom);
                     return copyCom;
                 }
                 //通过组件生成新的dom
@@ -619,7 +618,7 @@
                     this.componentSlotReplace(comLabel, copyCom, parentCom);
 
                     //向所有组件添加最顶层组件
-                    this.componentLoad(comPrototype);
+                    this.componentLoad(copyCom);
                     return copyCom;
                 } else {
                     let obj = {};
@@ -2913,4 +2912,56 @@
     };
 
     global.Main = Main;
+    function getRootPath() {
+        //获取当前网址，如： http://localhost:8088/test/test.jsp
+        let curPath = window.document.location.href;
+        //获取主机地址之后的目录，如： test/test.jsp
+        let pathName = window.document.location.pathname;
+        let pos = curPath.indexOf(pathName);
+        //获取主机地址，如： http://localhost:8088
+        let localhostPath = curPath.substring(0, pos);
+        //获取带"/"的项目名，如：/test
+        let projectName = pathName.substring(0, pathName.substr(1).indexOf('/') + 1);
+        return (localhostPath + projectName);//发布前用此
+    }
+    global.input = function (href) {
+        function load(href) {
+            let xhr = new XMLHttpRequest(),
+                okStatus = document.location.protocol === "file:" ? 0 : 200;
+            xhr.open('GET', href, false);
+            xhr.overrideMimeType("text/html;charset=utf-8");//默认为utf-8
+            xhr.send(null);
+            return xhr.status === okStatus ? xhr.responseText : null;
+        }
+
+        //获取文件后缀
+        function getType(file){
+            let filename = file;
+            let index1 = filename.lastIndexOf(".") + 1;
+            let index2 = filename.length;
+            let type = filename.substring(index1,index2);
+            return type;
+        }
+
+        let output;
+        let jsStr = load(href);
+        if(getType(href) === 'html') {
+            let div = document.createElement('div');
+            div.innerHTML = jsStr;
+            let templateText = div.getElementsByTagName('template')[0].innerHTML;
+            let jsText = div.getElementsByTagName('script')[0].innerHTML;
+            let style = div.getElementsByTagName('style')[0];
+            let styleText = style.innerHTML;
+
+            output = (new Function('let output = {};' + jsText + 'return output;'))();
+            output.template = templateText;
+            output.style = {
+                scoped: style.hasAttribute('scoped'),
+                value: styleText
+            }
+        }else{
+            output = (new Function('let output = {};' + jsStr + 'return output;'))();
+        }
+        return output;
+    }
 })(this);

@@ -1,0 +1,27 @@
+<template>
+    <div>
+        <div>
+            <img m-for="v in imgs" m-attr:src="v">
+        </div>
+    </div>
+</template>
+<script>
+    output = {
+        data: function () {
+
+            return {
+                props: {
+                    imgs: {
+                        type: Array
+                    }
+                }
+            }
+        }
+    }
+</script>
+
+<style scoped>
+    div{
+        background-color: red;
+    }
+</style>

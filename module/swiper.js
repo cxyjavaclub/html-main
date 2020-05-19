@@ -7,6 +7,7 @@
                 .swiper{        
                     background-color: #FFFFFF;
                 } 
+                
                 p {    
                     color: red;     
                 }                   

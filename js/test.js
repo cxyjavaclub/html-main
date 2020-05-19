@@ -49,6 +49,8 @@ function observe(obj) {
 }
 
 let cc = 123
+
+output = 789
 // console.log('test')
 
 // let cc = {
