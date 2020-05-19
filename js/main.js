@@ -569,14 +569,15 @@
              * @param parentCom
              */
             parseComponent: function (comPrototype, comLabel, parentCom) {
-                //解析组件之前
-                this.componentParseFront(comPrototype);
 
                 //通过组件生成新的组件
                 let copyCom = this.findPrototypeCreateComponent(comPrototype);
 
                 //组件对象重置
                 this.resetComponentObj(copyCom);
+
+                //解析组件之前
+                this.componentParseFront(copyCom);
 
                 //elDom为假
                 if(!copyCom.elDom){
@@ -744,18 +745,14 @@
                         for (let e of execs) {
                             if (e && e[1]) {
                                 //解析框架字符串{{}}
-                                console.log(e[1])
-                                // console.log(comObj)
-                                console.log(this.getDepNames())
                                 let runValue = this.parseFrameString(comObj, e[1]);
-                                console.log(this.getDepNames())
                                 let text = c.textContent;
                                 let that = this;
-                                // this.depNamesDispose(function (object, key, parameterObj) {
-                                //     new Subscriber(object, key, function () {
-                                //         c.textContent = text.replace(e[0], that.parseFrameString(parameterObj, e[1]));
-                                //     })
-                                // }, comObj.parseAddObjData);
+                                this.depNamesDispose(function (object, key, parameterObj) {
+                                    new Subscriber(object, key, function () {
+                                        c.textContent = text.replace(e[0], that.parseFrameString(parameterObj, e[1]));
+                                    })
+                                }, comObj.parseAddObjData);
                                 c.textContent = text.replace(e[0], runValue);
                             }
                         }
@@ -1263,34 +1260,34 @@
                     let splits = mForValue.split(/\sof\s|\sin\s/);
                     if (splits.length === 2) {
                         let runValue = this.parseFrameString(comObj, splits[1]);
-                        if (runValue) {
-                            let parameter = splits[0].trim();
-                            let parameters = [];
-                            if (parameter.match(',')) {
-                                if (!(parameter.charAt(0) === '(' && parameter.charAt(parameter.length - 1) === ')')) {
-                                    console.error('for格式错误');
-                                    return;
+                        let parameter = splits[0].trim();
+                        let parameters = [];
+                        if (parameter.match(',')) {
+                            if (!(parameter.charAt(0) === '(' && parameter.charAt(parameter.length - 1) === ')')) {
+                                console.error('for格式错误');
+                                return;
+                            }
+                            parameter = parameter.substring(1, parameter.length - 1);
+                            parameters = parameter.split(',');
+                        } else {
+                            parameters.push(parameter);
+                        }
+                        //去名称空格
+                        for (let i = 0; i < parameters.length; i++) {
+                            parameters[i] = parameters[i].trim();
+                        }
+                        this.depNamesDispose(function (object, key, parameterObj) {
+                            new Subscriber(object, key, function () {
+                                for(const d of obj.doms){
+                                    that.removeLabelElement(d);
                                 }
-                                parameter = parameter.substring(1, parameter.length - 1);
-                                parameters = parameter.split(',');
-                            } else {
-                                parameters.push(parameter);
-                            }
-                            //去名称空格
-                            for (let i = 0; i < parameters.length; i++) {
-                                parameters[i] = parameters[i].trim();
-                            }
-                            this.depNamesDispose(function (object, key, parameterObj) {
-                                new Subscriber(object, key, function () {
-                                    for(const d of obj.doms){
-                                        that.removeLabelElement(d);
-                                    }
-                                    obj.num = 0;
-                                    obj.doms.length = 0;
-                                    runValue = that.parseFrameString(parameterObj, splits[1]);
-                                    that.parseDomMFORValue(runValue, replaceDom, dom, parameters, obj, comObj);
-                                })
-                            }, comObj.parseAddObjData);
+                                obj.num = 0;
+                                obj.doms.length = 0;
+                                runValue = that.parseFrameString(parameterObj, splits[1]);
+                                that.parseDomMFORValue(runValue, replaceDom, dom, parameters, obj, comObj);
+                            })
+                        }, comObj.parseAddObjData);
+                        if (runValue) {
                             this.parseDomMFORValue(runValue, replaceDom, dom, parameters, obj, comObj);
                         }
                     } else {
@@ -2427,7 +2424,6 @@
                         }
 
                         new Subscriber(object, key, function () {
-                            console.log(key);
                             let value = that.parseSpecialMAttrString(obj.incidentName, dom, that.parseFrameString(parameterObj, obj.value), runObj);
                             runObj = value;
                             that.addDomAttr(dom, obj.incidentName, value);

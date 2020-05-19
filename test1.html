@@ -1,6 +1,7 @@
 <template>
     <div>
         <h1 m-if="true">我是test1</h1>
+        <div m-for="v in aac">{{v}}</div>
         <div m-attr:style="{backgroundColor: 0==cc ? 'red' : 'blue'}">4545454545</div>
         <div m-for="(v, index) in d">
             <p m-for="c in v">
@@ -8,8 +9,9 @@
                 <h2 m-attr:style="{backgroundColor: index==cc ? 'red' : 'blue'}">12123</h2>
             </p>
         </div>
+        <div m-for="v in list">{{v}}</div>
         <===========================>
-<!--        <test2></test2>-->
+        <test2></test2>
     </div>
 </template>
 <script>
@@ -21,12 +23,17 @@
                 cc: 0,
                 d:[
                     {aa: 1}
-                ]
+                ],
+                list: null
             }
+        },
+        created: function(){
+            this.aac = [12, 13, 45];
         },
         mounted: function () {
             setTimeout(() =>{
                 this.cc = 1;
+                this.list = [1, 2, 3, 4, 6, 8]
             }, 5000)
         },
         components:{
