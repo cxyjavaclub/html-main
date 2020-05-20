@@ -3018,7 +3018,7 @@
                 }
             }
         } else {
-            output = (new Function('let output = {};' + jsStr + 'return output;'))();
+            output = (new Function('let output = {};' + jsStr + ';return output;'))();
         }
         return output;
     }
