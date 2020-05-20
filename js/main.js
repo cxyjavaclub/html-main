@@ -9,7 +9,7 @@
     function Main(obj) {
         let com = MainTool.methods._init(obj);
         //添加样式
-        if(com.style && com.style.value){
+        if (com.style && com.style.value) {
             MainTool.methods.addStyleToHead(com.style.value);
         }
         return com;
@@ -40,7 +40,7 @@
      * 添加插件
      * @param plugin
      */
-    Main.use = function(plugin){
+    Main.use = function (plugin) {
         //插件初始化
         plugin.initAll();
         Main.plugins.push(plugin);
@@ -164,7 +164,7 @@
 
         },
         //渲染组件之前运行的运行函数
-        created: function(){
+        created: function () {
 
         },
 
@@ -198,16 +198,16 @@
              */
             mergeConfig: function (obj) {
                 //添加el
-                if(!obj.el){
+                if (!obj.el) {
                     obj.el = null;
                 }
 
                 //添加elDom
-                if(!obj.elDom){
+                if (!obj.elDom) {
                     obj.elDom = null;
                 }
                 //组件值传递挂载对象
-                if(!obj.props){
+                if (!obj.props) {
                     obj.$props = {};
                 }
 
@@ -216,7 +216,7 @@
                 if (obj.components) {
                     obj.children = obj.components;
                     delete obj.components
-                }else{
+                } else {
                     obj.children = [];
                 }
 
@@ -224,12 +224,12 @@
                 obj.parent = null;
 
                 // 子组件dom
-                obj.childrenDom = function(){
+                obj.childrenDom = function () {
                     return new Map();
                 }
 
                 //数据集
-                if(!obj.data){
+                if (!obj.data) {
                     obj.data = function () {
                         return {};
                     }
@@ -246,7 +246,7 @@
                 }
 
                 //计算属性
-                if(!obj.computes){
+                if (!obj.computes) {
                     obj.computes = {};
                 }
 
@@ -263,7 +263,7 @@
                 }
 
                 // 样式属性
-                if(!obj.style){
+                if (!obj.style) {
                     obj.style = {
                         scoped: true, //局部css样式
                         value: '' //样式内容
@@ -271,22 +271,24 @@
                 }
 
                 //html模板
-                if(!obj.template){
+                if (!obj.template) {
                     obj.template = '';
                 }
 
                 //事件加载完成运行函数
-                if(!obj.mounted){
-                    obj.mounted = function(){};
+                if (!obj.mounted) {
+                    obj.mounted = function () {
+                    };
                 }
 
                 //渲染组件之前运行的运行函数
-                if(!obj.created){
-                    obj.created = function(){};
+                if (!obj.created) {
+                    obj.created = function () {
+                    };
                 }
 
                 //组件相关函数对象
-                if(!obj.methods){
+                if (!obj.methods) {
                     obj.methods = {};
                 }
             },
@@ -358,9 +360,9 @@
              * @param comObj
              */
             inputJsAndCssUrl: function (comObj) {
-                if(comObj){
+                if (comObj) {
                     let input = comObj.input;
-                    if(input){
+                    if (input) {
                         this.inputCssOrJs(input.css, 0);
                         this.inputCssOrJs(input.js, 1);
                     }
@@ -373,11 +375,11 @@
              * @param type 1: js 0:css
              */
             inputCssOrJs: function (value, type) {
-                if(value){
-                    if(value.constructor === String){
+                if (value) {
+                    if (value.constructor === String) {
                         value = [value];
                     }
-                    if(value.constructor === Array) {
+                    if (value.constructor === Array) {
                         let head = document.querySelector('head');
                         let labelName = type === 0 ? 'link' : 'script';
                         for (const s of value) {
@@ -399,7 +401,7 @@
              * 组件解析之前完成
              */
             componentParseFront: function (comObj) {
-                if(comObj.created){
+                if (comObj.created) {
                     comObj.created();
                 }
             },
@@ -409,12 +411,12 @@
              */
             componentLoad: function (comObj) {
                 this.inputJsAndCssUrl(comObj);
-                if(comObj.mounted){
+                if (comObj.mounted) {
                     comObj.mounted();
                 }
                 comObj.$root = Main.$root;
                 //运行插件添加组件方法
-                for(const p of Main.plugins){
+                for (const p of Main.plugins) {
                     p.addComponent(comObj);
                 }
             },
@@ -465,7 +467,7 @@
                 if (dom) {
                     let child = dom.children;
                     for (let i = 0; i < child.length; i++) {
-                        if(!this.arrayFind(ifArr, child[i])){
+                        if (!this.arrayFind(ifArr, child[i])) {
                             //解析所有的类型标签
                             this.parseAllTypeLabel(child[i], newCom, null, function (com) {
                                 //组件模板替换
@@ -485,8 +487,8 @@
              * @returns {boolean}
              */
             arrayFind: function (arr, findObj) {
-                for(let a of arr){
-                    if(a.el === findObj){
+                for (let a of arr) {
+                    if (a.el === findObj) {
                         return true;
                     }
                 }
@@ -534,10 +536,10 @@
                             this.runFunction(funHtml, dom);
                         }
                     } else {
-                        if(funSlot){
-                            if(funSlot.constructor === Function){
+                        if (funSlot) {
+                            if (funSlot.constructor === Function) {
                                 this.runFunction(funSlot, slotObj);
-                            }else{
+                            } else {
                                 this.runFunction(funSlot.fun, slotObj);
                             }
                         }
@@ -550,12 +552,12 @@
              * 通过组件原型生成组件
              * @param comPrototype
              */
-            findPrototypeCreateComponent:  function (comPrototype) {
+            findPrototypeCreateComponent: function (comPrototype) {
                 let com = {};
-                for(const [name, value] of Object.entries(comPrototype)){
-                    if((name === 'data' || name === '$refs' || name === '$emits' || name === '$slots' || name === 'childrenDom') && (value.constructor === Function)){
+                for (const [name, value] of Object.entries(comPrototype)) {
+                    if ((name === 'data' || name === '$refs' || name === '$emits' || name === '$slots' || name === 'childrenDom') && (value.constructor === Function)) {
                         com[name] = value();
-                    }else {
+                    } else {
                         com[name] = value;
                     }
                 }
@@ -580,7 +582,7 @@
                 this.componentParseFront(copyCom);
 
                 //elDom为假
-                if(!copyCom.elDom){
+                if (!copyCom.elDom) {
                     copyCom.elDom = document.createTextNode('');
                     //向所有组件添加最顶层组件
                     this.componentLoad(copyCom);
@@ -666,7 +668,7 @@
              * @param comObj
              */
             parseEditableLabel: function (dom, comObj) {
-                if(dom){
+                if (dom) {
                     // console.log(dom.tagName.toLocaleLowerCase());
                 }
             },
@@ -684,7 +686,7 @@
              * @param dom
              */
             createNewDom: function (dom) {
-                if(dom){
+                if (dom) {
                     return dom.cloneNode(true);
                 }
                 return dom;
@@ -821,16 +823,16 @@
              * @param mifArr
              */
             parseMIFDomShow: function (v) {
-                if(v) {
+                if (v) {
                     if (v.show && v.mifObj.showObj === v) {
-                        for(let e of v.elDomFun){
+                        for (let e of v.elDomFun) {
                             e.false();
                         }
-                        for(let s of v.elDom){
+                        for (let s of v.elDom) {
                             this.removeLabelElement(s);
                         }
                         let after = v.replace;
-                        for(let e of v.elDomFun){
+                        for (let e of v.elDomFun) {
                             e.true();
                         }
                         for (let e of v.elDom) {
@@ -850,13 +852,13 @@
                 let d = mifObj.val;
                 let obj = null;
                 if (mifObj.showObj) {
-                    if(mifObj.showObj.noElDomFun) {
+                    if (mifObj.showObj.noElDomFun) {
                         this.runFunction(mifObj.showObj.noElDomFun.false);
                     }
-                    for(let e of mifObj.showObj.elDomFun){
+                    for (let e of mifObj.showObj.elDomFun) {
                         e.false();
                     }
-                    for(let s of mifObj.showObj.elDom){
+                    for (let s of mifObj.showObj.elDom) {
                         this.removeLabelElement(s);
                     }
                     mifObj.showObj = null;
@@ -865,7 +867,7 @@
                     let v = d[i];
                     if ((v.show || v.name === 'm-else') && (!obj)) {
                         let after = v.replace;
-                        if(v.noElDomFun) {
+                        if (v.noElDomFun) {
                             this.runFunction(v.noElDomFun.true);
                         }
                         for (let e of v.elDomFun) {
@@ -876,14 +878,14 @@
                             after = e;
                         }
                         mifObj.showObj = v;
-                        obj =  [v];
-                        if(!v.firstTime) {
+                        obj = [v];
+                        if (!v.firstTime) {
                             v.firstTime = true;
                         }
-                    }else{
-                        if(!v.firstTime){
+                    } else {
+                        if (!v.firstTime) {
                             v.firstTime = true;
-                            for(let e of v.elDomFun){
+                            for (let e of v.elDomFun) {
                                 e.false();
 
                             }
@@ -924,8 +926,8 @@
                         }
                     }
                     let ar = this.parseMIFDomClassify(d);
-                    if(ar){
-                        for(let a of ar){
+                    if (ar) {
+                        for (let a of ar) {
                             arr.push(a);
                         }
                     }
@@ -947,7 +949,7 @@
                                 v.parseType = 0;
                                 v.slot = [slotObj];
                                 v.elDom.push(v.el);
-                                if(!comObj.$ifSlots){
+                                if (!comObj.$ifSlots) {
                                     comObj.$ifSlots = [];
                                 }
                                 comObj.$ifSlots.push(v);
@@ -961,19 +963,19 @@
                             }, function (forObj) {
                                 forObj.mifObj = true;
                                 v.parseType = 3;
-                                if(forObj.parseType === 0){
+                                if (forObj.parseType === 0) {
                                     v.slot = forObj.doms;
-                                    for(let s of forObj.doms){
+                                    for (let s of forObj.doms) {
                                         v.elDom.push(s.dom);
                                     }
-                                    if(!comObj.$ifSlots){
+                                    if (!comObj.$ifSlots) {
                                         comObj.$ifSlots = [];
                                     }
                                     comObj.$ifSlots.push(v);
-                                }else{
+                                } else {
                                     v.elDom = forObj.doms;
                                 }
-                        })
+                            })
                     }
                 }
             },
@@ -1037,7 +1039,7 @@
                 for (let a of domArr) {
                     let obj = {};
                     if (a.length > 0) {
-                        for(const c of a){
+                        for (const c of a) {
                             c.elDom = [];
                             c.elDomFun = [];
                         }
@@ -1055,16 +1057,16 @@
              */
             regroupMIFGroupingObjAfter: function (domArr) {
                 for (let a of domArr) {
-                    for(let v of a.val){
-                        if(v.elDomFun.length > 0){
-                            for(let e of v.elDomFun){
+                    for (let v of a.val) {
+                        if (v.elDomFun.length > 0) {
+                            for (let e of v.elDomFun) {
                                 e.delete();
                             }
                         }
-                        if(v.elDom.length > 0) {
+                        if (v.elDom.length > 0) {
                             v.replace = document.createTextNode('');
                             this.insertBefore(v.replace, v.elDom[0]);
-                            for(let e of v.elDom){
+                            for (let e of v.elDom) {
                                 this.removeLabelElement(e);
                             }
                         }
@@ -1080,9 +1082,9 @@
              */
             parseComponentChildLabelMIF: function (dom, comObj) {
                 let child;
-                if(dom.constructor === Array){
+                if (dom.constructor === Array) {
                     child = dom;
-                }else{
+                } else {
                     child = dom.children;
                 }
                 //解析m-if分组
@@ -1278,7 +1280,7 @@
                         }
                         this.depNamesDispose(function (object, key, parameterObj) {
                             new Subscriber(object, key, function () {
-                                for(const d of obj.doms){
+                                for (const d of obj.doms) {
                                     that.removeLabelElement(d);
                                 }
                                 obj.num = 0;
@@ -1291,7 +1293,7 @@
                             this.parseDomMFORValue(runValue, replaceDom, dom, parameters, obj, comObj);
                         }
                     } else {
-                        console.error('for格式错误：' + c.tagName);
+                        console.error('for格式错误：' + dom.tagName);
                     }
                     //删除当前节点
                     if (dom.parentNode) {
@@ -1318,10 +1320,12 @@
              */
             insertAfter: function (newElement, targentElement) {
                 let parent = targentElement.parentNode;
-                if (parent.lastChild == targentElement) {
-                    parent.appendChild(newElement);
-                } else {
-                    parent.insertBefore(newElement, targentElement.nextSibling);
+                if(parent) {
+                    if (parent.lastChild == targentElement) {
+                        parent.appendChild(newElement);
+                    } else {
+                        parent.insertBefore(newElement, targentElement.nextSibling);
+                    }
                 }
             },
 
@@ -1367,7 +1371,7 @@
             parseComponentSlot: function (dom, comObj, flag) {
                 let labelName = dom.tagName.toLowerCase();
                 if (labelName === 'slot') {
-                    if(flag){
+                    if (flag) {
                         return true;
                     }
                     let slotObj = {};
@@ -1491,10 +1495,10 @@
              * @returns {string|null}
              */
             ifSlotsFind: function (ifSlots, slot) {
-                if(ifSlots){
-                    for(let i of ifSlots){
-                        for(let t of i.slot){
-                            if(t === slot){
+                if (ifSlots) {
+                    for (let i of ifSlots) {
+                        for (let t of i.slot) {
+                            if (t === slot) {
                                 return i;
                             }
                         }
@@ -1510,10 +1514,10 @@
              * @returns {any|null}
              */
             ifLabelFind: function (domArr, dom) {
-                if(domArr){
-                    for(let i of domArr){
-                        for(let t of i.val){
-                            if(t.el === dom){
+                if (domArr) {
+                    for (let i of domArr) {
+                        for (let t of i.val) {
+                            if (t.el === dom) {
                                 return t;
                             }
                         }
@@ -1544,8 +1548,8 @@
 
                 //清空if传递的elDom
                 let ifSlots = comObj.$ifSlots;
-                if(ifSlots){
-                    for(let i of ifSlots){
+                if (ifSlots) {
+                    for (let i of ifSlots) {
                         i.elDom = [];
                     }
                 }
@@ -1555,19 +1559,20 @@
                     let obj = arrObj[name];
                     let that = this;
                     //有对应的插槽内容
-                    if(obj && slot.length > 0){
+                    if (obj && slot.length > 0) {
                         //替换插槽
-                        for(const s of slot) {
+                        for (const s of slot) {
                             //检测当前元素的插槽是否有判断标签
                             let elArr = this.ifSlotsFind(ifSlots, s);
                             let doms = [];
-                            for(const d of obj.dom){
+                            for (const d of obj.dom) {
                                 doms.push(this.createNewDom(d))
                             }
                             //解析标签
                             for (let i = 0; i < doms.length; i++) {
                                 let d = doms[i];
                                 let slotDomArr = [];
+                                // debugger
                                 //解析dom并添加额外数据
                                 this.parseComponentAndAddObjData(d, parentCom, s[obj.value],
                                     {
@@ -1589,40 +1594,40 @@
                                         elArr.elDom.push(d);
                                         if (t) {
                                             this.readMIfElDomFun(t, index, d, elArr.elDom,
-                                            function () {
-                                                //上一是如果使用默认了默认插槽的值，这里就要先删除默认插槽的dom元素
-                                                if(saveArr[name].num <= 0 && s.parseFlag){
-                                                    that.addDefaultSlotLabel(s, false);
-                                                }
-                                                //增加替换插槽的数量
-                                                saveArr[name].num++;
-                                                //删除if默认插槽使用对象
-                                                if(elArr.noElDomFun){
-                                                    elArr.noElDomFun = null;
-                                                }
-                                            }, function () {
-                                                //插槽替换dom减一，如果为0，替换为默认插槽的值
-                                                if (--saveArr[name].num <= 0) {
-                                                    //检测插槽默认值是否解析了，没有则解析
-                                                    if(!s.parseFlag){
-                                                        that.parseDefaultSlotLabel(s, comObj);
-                                                        s.dom = elArr.replace;
+                                                function () {
+                                                    //上一是如果使用默认了默认插槽的值，这里就要先删除默认插槽的dom元素
+                                                    if (saveArr[name].num <= 0 && s.parseFlag) {
+                                                        that.addDefaultSlotLabel(s, false);
                                                     }
-                                                    //判断当前插槽是否显示如果显示就显示默认插槽的元素
-                                                    if(elArr === elArr.mifObj.showObj){
-                                                        that.addDefaultSlotLabel(s, true);
+                                                    //增加替换插槽的数量
+                                                    saveArr[name].num++;
+                                                    //删除if默认插槽使用对象
+                                                    if (elArr.noElDomFun) {
+                                                        elArr.noElDomFun = null;
                                                     }
-                                                    //插槽没有替换元素是使用增加默认插槽的添加和删除
-                                                    elArr.noElDomFun = {
-                                                        true: function () {
+                                                }, function () {
+                                                    //插槽替换dom减一，如果为0，替换为默认插槽的值
+                                                    if (--saveArr[name].num <= 0) {
+                                                        //检测插槽默认值是否解析了，没有则解析
+                                                        if (!s.parseFlag) {
+                                                            that.parseDefaultSlotLabel(s, comObj);
+                                                            s.dom = elArr.replace;
+                                                        }
+                                                        //判断当前插槽是否显示如果显示就显示默认插槽的元素
+                                                        if (elArr === elArr.mifObj.showObj) {
                                                             that.addDefaultSlotLabel(s, true);
-                                                        },
-                                                        false: function () {
-                                                            that.addDefaultSlotLabel(s, false);
+                                                        }
+                                                        //插槽没有替换元素是使用增加默认插槽的添加和删除
+                                                        elArr.noElDomFun = {
+                                                            true: function () {
+                                                                that.addDefaultSlotLabel(s, true);
+                                                            },
+                                                            false: function () {
+                                                                that.addDefaultSlotLabel(s, false);
+                                                            }
                                                         }
                                                     }
-                                                }
-                                            });
+                                                });
                                         }
                                     } else {
                                         //插槽没有判断标签
@@ -1635,7 +1640,7 @@
                                             t.elDomFun.push({
                                                 true: function () {
                                                     that.insertAfter(d, replace);
-                                                    if(saveArr[name].num <= 0 && s.parseFlag){
+                                                    if (saveArr[name].num <= 0 && s.parseFlag) {
                                                         that.addDefaultSlotLabel(s, false);
                                                     }
                                                     saveArr[name].num++;
@@ -1646,7 +1651,7 @@
                                                 false: function () {
                                                     this.delete();
                                                     if (--saveArr[name].num <= 0) {
-                                                        if(!s.parseFlag){
+                                                        if (!s.parseFlag) {
                                                             that.parseDefaultSlotLabel(s, comObj);
                                                             s.dom = replace;
                                                         }
@@ -1659,16 +1664,16 @@
                                 }
                             }
                         }
-                    }else{
+                    } else {
                         //使用插槽默认值
-                        for(const s of slot) {
+                        for (const s of slot) {
                             //解析插槽默认值
                             this.parseDefaultSlotLabel(s, comObj);
                             this.addDefaultSlotLabel(s, true);
                         }
                     }
                     //删除所有的插槽标签
-                    for(const s of slot){
+                    for (const s of slot) {
                         this.deleteDomThis(s.dom);
                     }
                 }
@@ -1676,8 +1681,8 @@
                 this.regroupMIFGroupingObjAfter(domArr);
                 this.updateMIFDom(domArr, parentCom);
                 //重新判断
-                if(ifSlots) {
-                    for(let i of ifSlots){
+                if (ifSlots) {
+                    for (let i of ifSlots) {
                         this.parseMIFDomShow(i);
                     }
                 }
@@ -1689,13 +1694,13 @@
              * @param flag
              */
             addDefaultSlotLabel: function (slot, flag) {
-                if(flag){
+                if (flag) {
                     let dom = slot.dom;
-                    for(const c of slot.parseElDom){
+                    for (const c of slot.parseElDom) {
                         this.insertBefore(c, dom);
                     }
-                }else {
-                    for(const c of slot.parseElDom){
+                } else {
+                    for (const c of slot.parseElDom) {
                         this.removeLabelElement(c);
                     }
                 }
@@ -1719,20 +1724,20 @@
                     let t = this.ifLabelFind(domArr, child);
                     this.parseAllTypeLabel(child, comObj, {on: true},
                         function (com) {
-                        //组件模板替换
-                        parseArr.push(com.elDom);
-                    }, function (dom) {
-                        parseArr.push(dom);
-                    }, function (forObj) {
-                        parseArr = forObj.doms;
-                        i += forObj.num == 0 ? 0 : forObj.num - 1;
-                    });
-                    for(const d of parseArr){
-                        if(t){
+                            //组件模板替换
+                            parseArr.push(com.elDom);
+                        }, function (dom) {
+                            parseArr.push(dom);
+                        }, function (forObj) {
+                            parseArr = forObj.doms;
+                            i += forObj.num == 0 ? 0 : forObj.num - 1;
+                        });
+                    for (const d of parseArr) {
+                        if (t) {
                             let index = slot.parseElDom.length;
                             slot.parseElDom.push(d);
                             this.readMIfElDomFun(t, index, d, slot.parseElDom);
-                        }else{
+                        } else {
                             slot.parseElDom.push(d);
                         }
                     }
@@ -1761,7 +1766,7 @@
                         arr[index] = replace;
                         that.replaceLabelElement(replace, d);
                     },
-                    false:function () {
+                    false: function () {
                         this.delete();
                         that.runFunction(falseFun);
                     }
@@ -1904,8 +1909,7 @@
                             return value.call(comObj);
                         }
                     });
-                }
-                else if (constructor === Object) {
+                } else if (constructor === Object) {
                     let obj1 = {
                         enumerable: true,
                         configurable: true
@@ -2185,7 +2189,7 @@
                         comObj.$refs[attr.value] = arr;
                     }
                     //删除dom属性
-                    if(dom.constructor === HTMLHeadingElement){
+                    if (dom.constructor === HTMLHeadingElement) {
                         dom.removeAttribute('ref');
                     }
                 }
@@ -2327,9 +2331,9 @@
                         }
                     }
 
-                    if(!dom['on' + obj.incidentName]){
+                    if (!dom['on' + obj.incidentName]) {
                         dom['on' + obj.incidentName] = f;
-                    }else{
+                    } else {
                         let f1 = dom['on' + obj.incidentName];
                         dom['on' + obj.incidentName] = function () {
                             f1();
@@ -2408,13 +2412,13 @@
                     let that = this;
                     this.depNamesDispose(function (object, key, parameterObj, length) {
 
-                        if(length === 2 && obj.incidentName === 'value' && dom.tagName.toLocaleLowerCase() === 'input'){
+                        if (length === 2 && obj.incidentName === 'value' && dom.tagName.toLocaleLowerCase() === 'input') {
                             let f = function () {
                                 object[key] = dom.value;
                             }
-                            if(!dom.oninput){
+                            if (!dom.oninput) {
                                 dom.oninput = f;
-                            }else{
+                            } else {
                                 let f1 = dom.oninput;
                                 dom.oninput = function () {
                                     f1();
@@ -2817,16 +2821,14 @@
                 let prop = comObj.$props[name];
                 if (prop !== undefined) {
                     let that = this;
+                    if (type === 0) {
+                        value = this.parseFrameString(parentComObj, value);
+                    }
                     Object.defineProperty(comObj.$props, name, {
                         enumerable: true,
                         configurable: true,
                         get: function () {
-                            let v = null;
-                            if (type === 0) {
-                                v = parentComObj[value];
-                            }else if (type === 1) {
-                                v = value;
-                            }
+                            let v = value;
                             that.depIndirectDispose(null, comObj.$props, name);
                             return v;
                         },
@@ -2845,7 +2847,7 @@
                 if (props) {
                     comObj.$props = {};
                     let arr = Object.keys(props);
-                    if(arr.length > 0) {
+                    if (arr.length > 0) {
                         if (props.constructor === Array) {
                             Object.keys(props).forEach(function (key) {
                                 comObj.$props[key] = null;
@@ -2853,7 +2855,7 @@
                         } else if (props.constructor === Object) {
                             Object.keys(props).forEach(function (key) {
                                 comObj.$props[key] = null;
-                                if(props[key].constructor === Object){
+                                if (props[key].constructor === Object) {
                                     let d = props[key].default;
                                     comObj.$props[key] = d === undefined ? null : d;
                                 }
@@ -2918,6 +2920,7 @@
     };
 
     global.Main = Main;
+
     function getRootPath() {
         //获取当前网址，如： http://localhost:8088/test/test.jsp
         let curPath = window.document.location.href;
@@ -2930,6 +2933,7 @@
         let projectName = pathName.substring(0, pathName.substr(1).indexOf('/') + 1);
         return (localhostPath + projectName);//发布前用此
     }
+
     global.input = function (href) {
         function load(href) {
             let xhr = new XMLHttpRequest(),
@@ -2941,21 +2945,25 @@
         }
 
         //获取文件后缀
-        function getType(file){
+        function getType(file) {
             let filename = file;
             let index1 = filename.lastIndexOf(".") + 1;
             let index2 = filename.length;
-            let type = filename.substring(index1,index2);
+            let type = filename.substring(index1, index2);
             return type;
         }
 
         let output;
         let jsStr = load(href);
-        if(getType(href) === 'html') {
+        let type = getType(href);
+        if (type === 'html' || type === 'main') {
             let div = document.createElement('div');
             div.innerHTML = jsStr;
             let templateText = div.getElementsByTagName('template')[0].innerHTML;
+            //获取js数据
             let jsText = div.getElementsByTagName('script')[0].innerHTML;
+
+            //解析style
             let style = div.getElementsByTagName('style')[0];
             let styleText = style.innerHTML;
 
@@ -2965,7 +2973,51 @@
                 scoped: style.hasAttribute('scoped'),
                 value: styleText
             }
-        }else{
+
+            //获取引入样式
+            let inputStyleDoms = div.getElementsByTagName('input-style');
+            if (inputStyleDoms.length > 0) {
+                let inputStyleDom = inputStyleDoms[0];
+                let children = inputStyleDom.children;
+                for (let c of children) {
+                    let name = c.tagName.toLocaleLowerCase();
+                    if (name === 'scoped') {
+                        let ch = c.children;
+                        for (let l of ch) {
+                            let name = l.tagName.toLocaleLowerCase();
+                            if (name === 'list') {
+                                let acc = l.innerText;
+                                let str = load(acc);
+                                output.style.value += str;
+                            }
+                        }
+                    } else if (name === 'list') {
+                        let acc = c.innerText;
+                        if (output.input) {
+                            let css = output.input.css;
+                            if (css) {
+                                if (css.constructor === String) {
+                                    output.input.css = [];
+                                    output.input.css.push(css);
+                                    output.input.css.push(acc);
+                                } else if (css.constructor === Array) {
+                                    output.input.css.push(acc);
+                                } else {
+                                    output.input.css = [];
+                                    output.input.css.push(acc);
+                                }
+                            } else {
+                                output.input.css = [acc];
+                            }
+                        } else {
+                            output.input = {
+                                css: [acc]
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
             output = (new Function('let output = {};' + jsStr + 'return output;'))();
         }
         return output;

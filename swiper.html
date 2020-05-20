@@ -1,32 +1,41 @@
 <template>
     <div>
         <div>
+            <div>{{hhh}}</div>
             <img m-for="v in imgs" m-attr:src="v">
             <img  m-attr:src="img">
+            <h1 class="h1">121212121212</h1>
         </div>
     </div>
 </template>
 <script>
     output = {
+        input:{
+            css: 'css/index.css'
+        },
         props: {
             img: String,
             imgs: Array
         },
         data: function () {
             return {
-
+                aa: 'aa',
             }
         },
         created: function(){
-            console.log(this)
+            this.hhh = ''
         },
         mounted: function () {
+            this.hhh = ''
+            // setTimeout(() =>{
+            //     this.hhh = 123
+            // }, 5000)
         }
     }
 </script>
-
+<!--<input-style>-->
+<!--    <list>./css/index.css</list>-->
+<!--</input-style>-->
 <style scoped>
-    div{
-        background-color: red;
-    }
+
 </style>
