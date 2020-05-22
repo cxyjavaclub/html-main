@@ -2069,14 +2069,26 @@
             },
             //通过名称获取局部组件
             getFindNamePartComponent: function (newCom, name) {
-                //通过名称查找局部组件
-                return newCom.children[name];
+                for(let [n, value] of Object.entries(newCom.children)){
+                    let n1 = n.toLocaleLowerCase();
+                    let n2 = name.toLocaleLowerCase();
+                    if(n1 == n2){
+                        //通过名称查找局部组件
+                        return value;
+                    }
+                }
             },
 
             //通过名称获取全局组件
             getFindNameGlobalComponent: function (name) {
-                //通过名称查找全局组件
-                return Main.globalComponents[name];
+                for(let [n, value] of Object.entries(Main.globalComponents)){
+                    let n1 = n.toLocaleLowerCase();
+                    let n2 = name.toLocaleLowerCase();
+                    if(n1 == n2){
+                        //通过名称查找全局组件
+                        return value;
+                    }
+                }
             },
 
             //解析组件模板
