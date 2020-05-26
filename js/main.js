@@ -2221,19 +2221,44 @@
                             let startIndex = 0;
                             for (let s of arrStr) {
                                 if (s) {
-                                    let elms = dom.querySelectorAll(s);
-                                    let uuid = 'm-css-' + this.getUUid(16);
-                                    for (let e of elms) {
-                                        e.setAttribute(uuid, '');
+
+                                    let rc = '{', rc1;
+                                    let sp = s.split(',');
+                                    let ind = 0;
+                                    for(let s1 of sp){
+                                        if(sp.length > 1 && (ind !== sp.length - 1)){
+                                            rc = ',';
+                                        }else{
+                                            rc = '{';
+                                        }
+                                        ind++;
+                                        rc1 = rc;
+                                        let sp1 = s1.split(':');
+                                        if(sp1.length > 1){
+                                            rc = ':';
+                                        }
+                                        let s2 = sp1[0];
+                                        let elms = dom.querySelectorAll(s2);
+                                        let uuid = 'm-css-' + this.getUUid(16);
+                                        for (let e of elms) {
+                                            e.setAttribute(uuid, '');
+                                        }
+                                        let obj = this.addCharToString(str, rc, '[' + uuid + ']', startIndex);
+                                        startIndex = obj.index;
+                                        str = obj.str;
+                                        if(rc == ':'){
+                                            let se = str.substring(startIndex);
+                                            startIndex += se.search(rc1) + 1;
+                                        }
                                     }
-                                    let obj = this.addCharToString(str, '{', '[' + uuid + ']', startIndex);
-                                    startIndex = obj.index;
-                                    str = obj.str;
                                 }
+                                let se = str.substring(startIndex);
+                                startIndex += se.search('}') + 1;
                             }
                             //将组件模板更新
                             newCom.template = dom.innerHTML;
                         }
+                        console.log(str)
                         //将组件样式进行更新
                         newCom.style.value = str;
                     }
@@ -2256,6 +2281,7 @@
                         }
                     }
                 }
+                string = string.replace(/\/\*.*?\*\//g, '');
                 return string;
             },
             //删除指定字符之前的字符
@@ -2297,7 +2323,6 @@
                 let s = str.substring(start);
                 //查找rc下标位置
                 let se = s.search(rc); //7
-
                 if (se > -1) {
                     s = sf + s.substring(0, se) + as + s.substring(se);
                 }
@@ -2336,13 +2361,46 @@
              */
             parseComponentMJs: function (attr, dom, comObj) {
                 this.parseAttrMJS(attr, function (obj) {
-                    //添加属性事件
-                    let f = function () {
-                        if (comObj[obj.value]) {
-                            comObj[obj.value](dom);
+                    console.log(obj);
+                    let ex = /\(.*?\)/.exec(obj.value);
+                    let funRun;
+                    if(ex.length != 0){
+                        let csStr= '';
+                        let e = ex[0];
+                        obj.value = obj.value.replace(e, '');
+                        e = e.substring(1, e.length - 1);
+                        let csList = e.split(',');
+                        for(let c of csList){
+                            if(c){
+                                if(c != '$dom'){
+                                    let v = this.parseFrameString(comObj, c);
+                                    csStr += `${v},`;
+                                }else{
+                                    csStr += '$dom,';
+                                }
+                            }
+                        }
+                        if(csStr){
+                            csStr = csStr.substring(0, csStr.length - 1);
+                            csStr = `obj.${obj.value}(${csStr})`;
+                            funRun = new Function('obj', '$dom', csStr);
                         }
                     }
-
+                    //添加属性事件
+                    let f = function () {
+                        console.error(dom.outerHTML + ':不存在该事件！！！')
+                    }
+                    if (comObj[obj.value]) {
+                        if(funRun){
+                            f  = function () {
+                                funRun(comObj, dom);
+                            }
+                        }else{
+                            f  = function () {
+                                comObj[obj.value](dom);
+                            }
+                        }
+                    }
                     if (!dom['on' + obj.incidentName]) {
                         dom['on' + obj.incidentName] = f;
                     } else {

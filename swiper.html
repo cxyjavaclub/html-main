@@ -1,18 +1,16 @@
 <template>
     <div>
         <div>
-            <div>{{hhh}}</div>
+            <div m-for="(v, index) in 1" m-js:click="divClick(index, v)" class="div1">789div1{{hhh}}</div>
             <img m-for="v in imgs" m-attr:src="v">
             <img  m-attr:src="img">
             <h1 class="h1">121212121212</h1>
+            <h2 class="h2">121212121212</h2>
         </div>
     </div>
 </template>
 <script>
     output = {
-        input:{
-            css: 'css/index.css'
-        },
         props: {
             img: String,
             imgs: Array
@@ -23,13 +21,19 @@
             }
         },
         created: function(){
-            this.hhh = ''
+            this.hhh = '123'
         },
         mounted: function () {
-            this.hhh = ''
             // setTimeout(() =>{
             //     this.hhh = 123
             // }, 5000)
+        },
+        methods: {
+            divClick: function (dom, dom1) {
+                console.log(this);
+                console.log(dom);
+                console.log(dom1);
+            }
         }
     }
 </script>
@@ -37,5 +41,26 @@
 <!--    <list>./css/index.css</list>-->
 <!--</input-style>-->
 <style scoped>
+    .div1{
+        color: red;
+        /*121*/
+    }
+    .div2{
+        color: red;
+        /*121*/
+    }
+    .div3{
+        color: red;
+        background-color: red;
+        /*121*/
+    }
+    .div4{
+        color: red;
+        /*121*/
+    }
+    .h1:hover,h2:hover,h3,h4,h5:hover,h6{
+        background-color: red;
+    }
+
 
 </style>

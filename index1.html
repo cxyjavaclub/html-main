@@ -3,17 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
+    <style>
+        /*.div3:hover,.div2:hover{*/
+        /*    background-color: red;*/
+        /*}*/
+    </style>
 </head>
 <body>
+<div class="div2" kkkkk>12</div>
+<div class="div3">123</div>
     <div id="app">
-        <test1></test1>
+<!--        <test1></test1>-->
         <swiper m-attr:img="img" m-attr:imgs="imgs">
-
         </swiper>
     </div>
 <script src="js/main.js"></script>
 <script>
-    let test1 = input('test1.html');
+    // let test1 = input('test1.html');
     let swiper = input('swiper.html');
     let main = new Main({
         el: '#app',
@@ -23,7 +29,7 @@
             img: 'img/3.jpg'
         },
         components:{
-            test1: test1,
+            // test1: test1,
             swiper: swiper
         }
     });
