@@ -1,7 +1,8 @@
 <template>
     <div>
         <div>
-            <div m-for="(v, index) in 1" aa="123" m-js:click="divClick" class="div1">789div1{{hhh}}</div>
+            <div m-for="(v, index) in 2" aa="123" :bb="index" @click="divClick(1)" class="div1">789div1{{hhh}}</div>
+            <div m-js:click="divClick(1, $dom)">789654</div>
             <img m-for="v in imgs" m-attr:src="v">
             <img  m-attr:src="img">
             <h1 class="h1">121212121212</h1>
@@ -24,14 +25,17 @@
             this.hhh = '123'
         },
         mounted: function () {
+            console.log(this.originalDom);
             // setTimeout(() =>{
             //     this.hhh = 123
             // }, 5000)
         },
         methods: {
             divClick: function (dom) {
-                console.log(this);
+                // console.log(this);
                 console.log(dom);
+                this.$emit('click', 123);
+                // dom.style.color = 'red'
             }
         }
     }

@@ -701,24 +701,44 @@
             },
 
             /**
-             * 属性加工厂
+             *
              */
-            attrProcessingPlant: function (dom, attrs) {
-                for(let a of attrs){
+            /**
+             * 属性加工厂
+             * @param dom
+             * @param type类型(是否增加属性)
+             * @returns {[]}
+             */
+            attrProcessingPlant: function (dom, type) {
+                let attrs = dom.attributes;
+                let newAttrs = [];
+                for (const a of attrs) {
+                    let obj = {};
+                    obj.name = a.name;
+                    obj.value = a.value;
+                    newAttrs.push(obj);
+                }
+                for(let a of newAttrs){
                     let name = a.name;
+                    let str = ''
                     switch (name[0]) {
                         case '@':
-                            a.name = 'm-js:' + name.substring(1);
-                            dom.removeAttribute(name);
+                            str = 'm-js:';
                             break;
                         case ':':
-                            a.name = 'm-attr:' + name.substring(1);
-                            dom.removeAttribute(name);
+                            str = 'm-attr:';
                             break;
                     }
+                    if(str){
+                        dom.removeAttribute(name);
+                        a.name = str + name.substring(1);
+                        if(type === 1){
+                            dom.setAttribute(a.name, a.value);
+                        }
+                    }
                 }
+                return newAttrs;
             },
-
 
             /**
              * 解析组件属性
@@ -726,19 +746,8 @@
              * @param comObj 组件对象
              */
             parseComponentAttr: function (dom, comObj) {
-                //获取dom元素属性
-                let attrs = dom.attributes;
-                let newAttrs = [];
-
-                for (const a of attrs) {
-                    let obj = {};
-                    obj.name = a.name;
-                    obj.value = a.value;
-                    newAttrs.push(obj);
-                }
-
-                this.attrProcessingPlant(dom, newAttrs);
-
+                //属性加工厂
+                let newAttrs = this.attrProcessingPlant(dom, 0);
                 //解析每一个属性
                 for (let a of newAttrs) {
                     //解析ref
@@ -793,7 +802,9 @@
              * @param childComObj 子组件对象
              */
             parseComponentLabelAttr: function (labelDom, comObj, childComObj) {
-                let attrs = labelDom.attributes;
+                //属性加工
+                let attrs = this.attrProcessingPlant(labelDom, 1);
+
                 for (let a of attrs) {
                     //解析组件标签ref
                     this.parseComponentLabelRef(a, childComObj, comObj);
@@ -2394,6 +2405,7 @@
                         let csList = e.split(',');
                         for(let c of csList){
                             if(c){
+                                c = c.trim();
                                 if(c != '$dom'){
                                     let v = this.parseFrameString(comObj, c);
                                     csStr += `${v},`;
@@ -2407,6 +2419,7 @@
                             csStr = `obj.${obj.value}(${csStr})`;
                             funRun = new Function('obj', '$dom', csStr);
                         }
+
                     }
                     //添加属性事件
                     let f = function () {
