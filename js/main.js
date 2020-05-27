@@ -2250,46 +2250,47 @@
                     if (style) {
                         let str = style.value;
                         str = this.stringFormat(str);
+                        console.log(str);
+                        let ex = /[^{}]*?{[^{}]*?}/g;
                         if (style.scoped) {
-                            //局部样式
-                            let reg = /[\{][^\}]*\}/g;
-                            let arrStr = str.split(reg);
-                            let startIndex = 0;
-                            for (let s of arrStr) {
-                                if (s) {
-                                    let rc = '{', rc1;
-                                    let sp = s.split(',');
-                                    let ind = 0;
-                                    for(let s1 of sp){
-                                        if(sp.length > 1 && (ind !== sp.length - 1)){
-                                            rc = ',';
+                            let exec;
+                            while(exec = ex.exec(str)){
+                                let addIndex = exec.index;
+                                console.log(exec);
+                                console.log(ex.lastIndex);
+                                let ex1 = /^[^{}]*/g;
+                                let exec1 = ex1.exec(exec[0]);
+                                if(exec1 && (exec1.length > 0) && exec1[0]){
+                                    addIndex += exec1.index;
+                                    let s = exec1[0];
+                                    let split = s.split(',');
+                                    let addNum = split.length > 0 ? 1 : 0;
+                                    for(let s1 of split){
+                                        let search = s1.search(':');
+                                        let name = '';
+                                        if(search === (-1)){
+                                            name = s1;
+                                            addIndex += s1.length;
                                         }else{
-                                            rc = '{';
+                                            name = s1.substring(0, search);
+                                            addIndex += search;
                                         }
-                                        ind++;
-                                        rc1 = rc;
-                                        let sp1 = s1.split(':');
-                                        if(sp1.length > 1){
-                                            rc = ':';
-                                        }
-                                        let s2 = sp1[0];
-                                        let elms = dom.querySelectorAll(s2);
+                                        let elms = dom.querySelectorAll(name);
                                         let uuid = 'm-css-' + this.getUUid(16);
+                                        let uuidStr = '[' + uuid + ']';
                                         for (let e of elms) {
                                             e.setAttribute(uuid, '');
                                         }
-                                        let obj = this.addCharToString(str, rc, '[' + uuid + ']', startIndex);
-                                        startIndex = obj.index;
-                                        str = obj.str;
-                                        if(rc == ':'){
-                                            let se = str.substring(startIndex);
-                                            startIndex += se.search(rc1) + 1;
+                                        str = str.slice(0, addIndex) + uuidStr + str.slice(addIndex);
+                                        if(search !== (-1)){
+                                            addIndex += s1.length - search;
                                         }
+                                        addIndex += uuidStr.length + addNum;
+                                        ex.lastIndex += uuidStr.length;
                                     }
                                 }
-                                let se = str.substring(startIndex);
-                                startIndex += se.search('}') + 1;
                             }
+                            console.log(str);
                             //将组件模板更新
                             newCom.template = dom.innerHTML;
                         }
