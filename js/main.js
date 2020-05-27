@@ -2386,7 +2386,7 @@
                 this.parseAttrMJS(attr, function (obj) {
                     let ex = /\(.*?\)/.exec(obj.value);
                     let funRun;
-                    if(ex.length != 0){
+                    if(ex && ex.length != 0){
                         let csStr= '';
                         let e = ex[0];
                         obj.value = obj.value.replace(e, '');

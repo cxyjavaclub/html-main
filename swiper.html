@@ -1,7 +1,7 @@
 <template>
     <div>
         <div>
-            <div m-for="(v, index) in 1" :aa="123" @click="divClick(index, v)" class="div1">789div1{{hhh}}</div>
+            <div m-for="(v, index) in 1" aa="123" m-js:click="divClick" class="div1">789div1{{hhh}}</div>
             <img m-for="v in imgs" m-attr:src="v">
             <img  m-attr:src="img">
             <h1 class="h1">121212121212</h1>
@@ -29,10 +29,9 @@
             // }, 5000)
         },
         methods: {
-            divClick: function (dom, dom1) {
+            divClick: function (dom) {
                 console.log(this);
                 console.log(dom);
-                console.log(dom1);
             }
         }
     }
@@ -41,26 +40,10 @@
 <!--    <list>./css/index.css</list>-->
 <!--</input-style>-->
 <style scoped>
-    .div1{
-        color: red;
-        /*121*/
-    }
-    .div2{
-        color: red;
-        /*121*/
-    }
-    .div3{
-        color: red;
-        background-color: red;
-        /*121*/
-    }
-    .div4{
-        color: red;
-        /*121*/
+    *{
+        color: blue;
     }
     .h1:hover,h2:hover,h3,h4,h5:hover,h6{
         background-color: red;
     }
-
-
 </style>
