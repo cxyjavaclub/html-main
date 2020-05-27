@@ -701,6 +701,26 @@
             },
 
             /**
+             * 属性加工厂
+             */
+            attrProcessingPlant: function (dom, attrs) {
+                for(let a of attrs){
+                    let name = a.name;
+                    switch (name[0]) {
+                        case '@':
+                            a.name = 'm-js:' + name.substring(1);
+                            dom.removeAttribute(name);
+                            break;
+                        case ':':
+                            a.name = 'm-attr:' + name.substring(1);
+                            dom.removeAttribute(name);
+                            break;
+                    }
+                }
+            },
+
+
+            /**
              * 解析组件属性
              * @param dom 组件elDom
              * @param comObj 组件对象
@@ -709,16 +729,21 @@
                 //获取dom元素属性
                 let attrs = dom.attributes;
                 let newAttrs = [];
+
                 for (const a of attrs) {
                     let obj = {};
                     obj.name = a.name;
                     obj.value = a.value;
                     newAttrs.push(obj);
                 }
+
+                this.attrProcessingPlant(dom, newAttrs);
+
                 //解析每一个属性
                 for (let a of newAttrs) {
                     //解析ref
                     this.parseComponentRef(a, dom, comObj);
+
                     //解析m-attr
                     this.parseComponentMAttr(a, dom, comObj);
 
@@ -2221,7 +2246,6 @@
                             let startIndex = 0;
                             for (let s of arrStr) {
                                 if (s) {
-
                                     let rc = '{', rc1;
                                     let sp = s.split(',');
                                     let ind = 0;
@@ -2258,7 +2282,6 @@
                             //将组件模板更新
                             newCom.template = dom.innerHTML;
                         }
-                        console.log(str)
                         //将组件样式进行更新
                         newCom.style.value = str;
                     }
@@ -2361,7 +2384,6 @@
              */
             parseComponentMJs: function (attr, dom, comObj) {
                 this.parseAttrMJS(attr, function (obj) {
-                    console.log(obj);
                     let ex = /\(.*?\)/.exec(obj.value);
                     let funRun;
                     if(ex.length != 0){

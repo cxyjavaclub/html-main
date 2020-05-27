@@ -1,7 +1,7 @@
 <template>
     <div>
         <div>
-            <div m-for="(v, index) in 1" m-js:click="divClick(index, v)" class="div1">789div1{{hhh}}</div>
+            <div m-for="(v, index) in 1" :aa="123" @click="divClick(index, v)" class="div1">789div1{{hhh}}</div>
             <img m-for="v in imgs" m-attr:src="v">
             <img  m-attr:src="img">
             <h1 class="h1">121212121212</h1>
