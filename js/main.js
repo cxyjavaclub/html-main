@@ -526,7 +526,10 @@
                         let com = this.getFindNameComponent(comObj, name);
                         //获取到组件
                         if (com) {
-                            com.name = name;
+                            //当组件没有name时生成name
+                            if(!com.name){
+                                com.name = name;
+                            }
                             //解析组件并替换
                             let newCom = this.parseComponent(com, dom, comObj);
                             this.runFunction(funCom, newCom);
@@ -804,7 +807,6 @@
             parseComponentLabelAttr: function (labelDom, comObj, childComObj) {
                 //属性加工
                 let attrs = this.attrProcessingPlant(labelDom, 1);
-
                 for (let a of attrs) {
                     //解析组件标签ref
                     this.parseComponentLabelRef(a, childComObj, comObj);
@@ -2209,7 +2211,7 @@
              */
             parseHumpName: function (name) {
                 let str = '';
-                if (name.constructor === String) {
+                if (name && name.constructor === String) {
                     let strArr = name.split('-');
                     str = strArr[0];
                     for (let i = 1; i < strArr.length; i++) {
@@ -2413,8 +2415,8 @@
                         }
                         if(csStr){
                             csStr = csStr.substring(0, csStr.length - 1);
-                            csStr = `obj.${obj.value}(${csStr})`;
-                            funRun = new Function('obj', '$dom', csStr);
+                            csStr = `obj.${obj.value}(event,${csStr})`;
+                            funRun = new Function('event', 'obj', '$dom', csStr);
                         }
 
                     }
@@ -2424,12 +2426,12 @@
                     }
                     if (comObj[obj.value]) {
                         if(funRun){
-                            f  = function () {
-                                funRun(comObj, dom);
+                            f  = function (event) {
+                                funRun(event, comObj, dom);
                             }
                         }else{
-                            f  = function () {
-                                comObj[obj.value](dom);
+                            f  = function (event) {
+                                comObj[obj.value](event, dom);
                             }
                         }
                     }
@@ -2437,9 +2439,9 @@
                         dom['on' + obj.incidentName] = f;
                     } else {
                         let f1 = dom['on' + obj.incidentName];
-                        dom['on' + obj.incidentName] = function () {
-                            f1();
-                            f();
+                        dom['on' + obj.incidentName] = function (event) {
+                            f1(event);
+                            f(event);
                         }
                     }
                     //删除属性
@@ -2760,7 +2762,7 @@
                     //注意：实现函数里面不能读取对象里的值否则会改变Dep.names的值导致处理有问题
                     this.removeObjectAttrToGlobal(newObj, wObj);
                 } catch (e) {
-                    console.error(e);
+                    console.error(obj.name + '组件>' + e);
                 }
                 return result;
             },
@@ -2920,6 +2922,8 @@
              * @returns {boolean}
              */
             parseComponentProps: function (name, value, type, comObj, parentComObj) {
+                //解析驼峰
+                name = this.parseHumpName(name);
                 let prop = comObj.$props[name];
                 if (prop !== undefined) {
                     let that = this;
@@ -2946,6 +2950,7 @@
              */
             formatComponentProps: function (comObj) {
                 let props = comObj.props;
+                let that = this;
                 if (props) {
                     comObj.$props = {};
                     let arr = Object.keys(props);
@@ -2968,6 +2973,7 @@
                                 enumerable: true,
                                 configurable: true,
                                 get: function proxyGetter() {
+                                    that.depIndirectDispose(null, comObj.$props, key);
                                     return comObj.$props[key];
                                 }
                             });
@@ -3010,6 +3016,7 @@
                 let mJs = this.searchAttrM(attr, /m-js/);
                 let mAttr = this.searchAttrM(attr, /m-attr/);
                 if (!(name === 'ref' || mJs.flag || mAttr.flag)) {
+
                     //添加解析组件标签属性
                     this.addComponentLabelAttr(name, attr.value, 1, comObj);
                 }

@@ -1,24 +1,23 @@
 <template>
     <div>
         <div>
-            <div m-for="(v, index) in 2" aa="123" :bb="index" @click="divClick(1)" class="div1">789div1{{hhh}}</div>
-            <div m-js:click="divClick(1, $dom)">789654</div>
-            <img m-for="v in imgs" m-attr:src="v">
-            <img  m-attr:src="img">
-            <h1 class="h1">121212121212</h1>
-            <h2 class="h2">121212121212</h2>
+            {{aa1}}
         </div>
     </div>
 </template>
 <script>
     output = {
         props: {
-            img: String,
-            imgs: Array
+            img: {
+                type: String,
+                default: ''
+            },
+            imgs: Array,
+            timeStr: String,
         },
         data: function () {
             return {
-                aa: 'aa',
+                aa: 'red',
             }
         },
         created: function(){
@@ -26,9 +25,12 @@
         },
         mounted: function () {
             console.log(this.originalDom);
-            // setTimeout(() =>{
-            //     this.hhh = 123
-            // }, 5000)
+            console.log(this);
+            setTimeout(() =>{
+                this.aa = 'blue'
+                console.log(1212)
+                this.st = 4545
+            }, 5000)
         },
         methods: {
             divClick: function (dom) {
@@ -57,15 +59,6 @@
     }
     *{
         background-color: chartreuse;
-    }
-    .h1:hover,h2:hover,h3,h4,h5:hover,h6{
-        background-color: red;
-    }
-    .h1:hover,h2:hover,h3,h4,h5:hover,h6{
-        background-color: red;
-    }
-    .h1:hover,h2:hover,h3,h4,h5:hover,h6{
-        background-color: red;
     }
     .h1:hover,h2:hover,h3,h4,h5:hover,h6{
         background-color: red;
