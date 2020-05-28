@@ -2250,7 +2250,6 @@
                     if (style) {
                         let str = style.value;
                         str = this.stringFormat(str);
-                        console.log(str);
                         let ex = /[^{}]*?{[^{}]*?}/g;
                         if (style.scoped) {
                             let exec;
@@ -2288,7 +2287,6 @@
                                     }
                                 }
                             }
-                            console.log(str);
                             //将组件模板更新
                             newCom.template = dom.innerHTML;
                         }
