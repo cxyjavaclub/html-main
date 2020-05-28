@@ -2256,11 +2256,9 @@
                             let exec;
                             while(exec = ex.exec(str)){
                                 let addIndex = exec.index;
-                                console.log(exec);
-                                console.log(ex.lastIndex);
                                 let ex1 = /^[^{}]*/g;
                                 let exec1 = ex1.exec(exec[0]);
-                                if(exec1 && (exec1.length > 0) && exec1[0]){
+                                if(exec1 && (exec1.length > 0) && exec1[0] && (exec1[0].search('@') === -1) && (exec1[0].search(':') === -1)){
                                     addIndex += exec1.index;
                                     let s = exec1[0];
                                     let split = s.split(',');
