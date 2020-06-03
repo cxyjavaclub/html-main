@@ -11,30 +11,77 @@
 </head>
 <body>
     <div id="app">
-<!--        <test1></test1>-->
-        <swiper a-b="121" :t-s="img"  :time-str="img" @click="aab" :img="img" :imgs="imgs"></swiper>
+        <button @click="aab">单击</button>
+        <button @click="aab1">上</button>
+        <button @click="aab2">下</button>
+        <button @click="aab3">跳</button>
+        {{aa}}
+        <router-view></router-view>
+<!--        <swiper a-b="121" :t-s="img"  :time-str="img" @click="aab" :img="img" :imgs="imgs"></swiper>-->
     </div>
 <script src="js/main.js"></script>
 <script>
-    // let test1 = input('test1.html');
+    let test1 = input('test1.html');
     let swiper = input('swiper.html');
+    let router = input('plugin/router.js');
+    let bb = new router({
+        routes: [
+            {
+                path: '/',
+                redirect: '/htm2'
+            },
+            {
+                path: '/htm1',
+                component: swiper
+            },
+            {
+                path: '/htm2',
+                component: test1
+            }
+        ]
+    });
+    Main.use(bb);
+    console.log(bb);
+
     let main = new Main({
         el: '#app',
         data: {
+            aa: 456,
             flag: true,
             imgs:['img/1.jpg', 'img/2.jpg', 'img/3.jpg'],
             img: 'img/3.jpg'
         },
         components:{
-            // test1: test1,
             swiper: swiper
         },
         methods: {
-            aab: function (dom) {
-                alert(dom);
+            aab: function () {
+                this.$router.selectIndex(1);
+            },
+            aab1: function () {
+                this.$router.back();
+            },
+            aab2: function () {
+                this.$router.forward();
+            },
+            aab3: function () {
+                this.$router.go(0);
             }
         }
     });
+
+
+    // history.pushState(null, "", "/");
+    // history.go(-1)
+    // console.log(history);
+    // console.log(history.scrollRestoration);
+    // Main.MainTool.methods.initComponent('swiper', swiper);
+    // console.log(swiper);
+    // let a = Main.MainTool.methods.parseComponent(swiper);
+    // console.log(a);
+    // document.querySelector('body').appendChild(a.elDom)
+    // let s = Main.MainTool.methods.addStyleToHead(a.style.value)
+    // Main.MainTool.methods.removeLabelElement(s)
 </script>
 </body>
 </html>

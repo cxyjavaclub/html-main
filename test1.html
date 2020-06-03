@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div style="height: 2000px">
         <h1 m-if="true">我是test1</h1>
         <div m-for="v in aac">{{v}}</div>
         <div m-attr:style="{backgroundColor: 0==cc ? 'red' : 'blue'}">4545454545</div>
@@ -29,6 +29,13 @@
         },
         created: function(){
             this.aac = [12, 13, 45];
+        },
+        deactivated: function () {
+            console.log(this)
+            console.log('test1停用')
+        },
+        activated: function () {
+            console.log('test1活化')
         },
         mounted: function () {
             setTimeout(() =>{

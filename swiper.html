@@ -1,7 +1,8 @@
 <template>
-    <div>
-        <div>
-            {{aa1}}
+    <div style="height: 2000px">
+        <slot></slot>
+        <div @click="divClick">
+            {{aa}}
         </div>
     </div>
 </template>
@@ -23,21 +24,22 @@
         created: function(){
             this.hhh = '123'
         },
+        deactivated: function () {
+            console.log('swiper停用')
+        },
+        activated: function () {
+            console.log('swiper活化')
+        },
         mounted: function () {
-            console.log(this.originalDom);
+            // console.log(this.originalDom);
             console.log(this);
             setTimeout(() =>{
                 this.aa = 'blue'
-                console.log(1212)
-                this.st = 4545
             }, 5000)
         },
         methods: {
-            divClick: function (dom) {
-                // console.log(this);
-                console.log(dom);
-                this.$emit('click', 123);
-                // dom.style.color = 'red'
+            divClick: function () {
+                this.$router.back(1);
             }
         }
     }
