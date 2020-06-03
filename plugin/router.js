@@ -166,8 +166,13 @@ router.prototype.hideShowRouter = function () {
     }
 };
 
-//通过下标选择路由
-router.prototype.selectIndex = function(i, query){
+/**
+ * 通过下标选择路由
+ * @param i 下标
+ * @param query 携带参数
+ * @param refreshFlag 刷新标志
+ */
+router.prototype.selectIndex = function(i, query, refreshFlag){
     if(this.routes.length > 0 && this.elDom && i >= 0 && i < this.routes.length){
         let route = this.routes[i];
         let comPrototype = this.routes[i].component;
@@ -190,14 +195,17 @@ router.prototype.selectIndex = function(i, query){
         this.showRouter = route;
         this.index = i;
         this.path = route.path;
-        //设置路径
-        this.pushState({com: com, query: this.query, index: i, path: route.path}, route.path);
+        if(!refreshFlag) {
+            //设置路径
+            this.pushState({com: com, query: this.query, index: i, path: route.path}, route.path);
+        }
     }else{
         if(i != this.index){
             console.error('路由为空或不存在这个下标的路由');
         }
     }
 }
+
 
 //通过路径路由
 router.prototype.goPath = function (obj){
@@ -211,6 +219,12 @@ router.prototype.goPath = function (obj){
         }
     }
 }
+
+
+//刷新路由
+router.prototype.refresh = function () {
+    this.selectIndex(this.index, null, true);
+};
 
 //路由移动到上一个网址，等同于点击浏览器的后退键。对于第一个访问的网址，该方法无效果。
 router.prototype.back = function () {
@@ -227,7 +241,7 @@ router.prototype.forward = function () {
 // 相当于刷新当前页面
 router.prototype.go = function (i) {
     if((!i) || i === 0){
-        this.selectIndex(this.index);
+        this.refresh();
     }else{
         this.history.go(i);
     }
