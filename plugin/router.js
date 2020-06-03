@@ -9,7 +9,7 @@ function router(obj){
          * 路由对象：
          *      属性：
          *      path：路径
-         *      component：组件
+         *      component：组件 可以是组件路径可以提高初次加载速度，在使用路由是再向服务器发送请求
          *      redirect：重定向
          * 路由对象提供两个可调用生命周期：
          *      deactivated：停用
@@ -100,9 +100,11 @@ router.prototype.routeInit = function(){
             if(route && route.constructor === Object && route.path && (route.component || route.redirect)){
                 let com = route.component;
                 if(com){
-                    this.main.MainTool.methods.initComponent(com.name || 'router', com);
-                    //向组件原型添加路由对象
-                    com.$router = this;
+                    if(com.constructor === Object) {
+                        this.main.MainTool.methods.initComponent(com.name || 'router', com);
+                        //向组件原型添加路由对象
+                        com.$router = this;
+                    }
                 }else{
                     let redirect = route.redirect;
                     let com1 = null;
@@ -181,6 +183,14 @@ router.prototype.selectIndex = function(i, query, refreshFlag){
         if(query){
             //增加携带参数
             this.query = query;
+        }
+        //当组件是路径时引入组件，减少初次组件加载时间
+        if(comPrototype.constructor === String){
+            let c = this.global.input(comPrototype);
+            this.main.MainTool.methods.initComponent(c.name || 'router', c);
+            //向组件原型添加路由对象
+            c.$router = this;
+            this.routes[i].component = comPrototype = c;
         }
         //解析组件
         let com = this.main.MainTool.methods.parseComponent(comPrototype);
