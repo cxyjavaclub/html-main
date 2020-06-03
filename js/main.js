@@ -23,6 +23,8 @@
         Main.globalComponents = [];
         //组件加载完成运行
         Main.componentLoadRuns = [];
+        //组件原型解析完成运行
+        Main.componentPrototypeLoadRuns = [];
     })();
 
     /**
@@ -42,6 +44,13 @@
      */
     Main.addComponentLoadRuns = function(fun){
         Main.componentLoadRuns.push(fun);
+    }
+    /**
+     * 添加组件解析完成运行函数
+     * @param fun
+     */
+    Main.addComponentPrototypeLoadRuns = function(fun){
+        Main.componentPrototypeLoadRuns.push(fun);
     }
 
     /**
@@ -341,6 +350,8 @@
                         }
                     }
                 }
+                //组件原型解析完成运行
+                this.componentPrototypeLoad(newCom);
             },
 //======================================================================
 
@@ -418,6 +429,17 @@
                     comObj.created();
                 }
             },
+
+            /**
+             * 组件原型解析完成运行
+             * @param comObjPrototype
+             */
+            componentPrototypeLoad: function (comObjPrototype) {
+                //运行组件原型解析完成运行
+                for (const p of Main.componentPrototypeLoadRuns) {
+                    p(comObjPrototype);
+                }
+            },
             /**
              * 组件加载完成
              * @param comObj
@@ -434,7 +456,7 @@
              */
             componentAddDomLoad: function(comObj){
                 this.inputJsAndCssUrl(comObj);
-                //运行插件添加组件方法
+                //运行组件加载完成运行函数
                 for (const p of Main.componentLoadRuns) {
                     p(comObj);
                 }
@@ -533,7 +555,6 @@
              * @param funMFor  m-for运行函数运行函数
              */
             parseAllTypeLabel: function (dom, comObj, funSlot, funCom, funHtml, funMFor) {
-
                 if (dom && dom instanceof HTMLElement) {
                     //检测当前dom不是组件根dom
                     if (dom !== comObj.elDom) {

@@ -15,14 +15,14 @@
         <button @click="aab1">上</button>
         <button @click="aab2">下</button>
         <button @click="aab3">跳</button>
-        {{aa}}
         <router-view></router-view>
-<!--        <swiper a-b="121" :t-s="img"  :time-str="img" @click="aab" :img="img" :imgs="imgs"></swiper>-->
+        <swiper a-b="121" :t-s="img"  :time-str="img" @click="aab" :img="img" :imgs="imgs"></swiper>
     </div>
 <script src="js/main.js"></script>
 <script>
     let test1 = input('test1.html');
     let swiper = input('swiper.html');
+    let swiper1 = input('swiper.html');
     let router = input('plugin/router.js');
     let bb = new router({
         routes: [
@@ -41,7 +41,7 @@
         ]
     });
     Main.use(bb);
-    console.log(bb);
+
 
     let main = new Main({
         el: '#app',
@@ -52,11 +52,11 @@
             img: 'img/3.jpg'
         },
         components:{
-            swiper: swiper
+            swiper: swiper1
         },
         methods: {
             aab: function () {
-                this.$router.selectIndex(1);
+                this.$router.goPath({path: '/htm1', query: {aa: 123}});
             },
             aab1: function () {
                 this.$router.back();

@@ -101,6 +101,8 @@ router.prototype.routeInit = function(){
                 let com = route.component;
                 if(com){
                     this.main.MainTool.methods.initComponent(com.name || 'router', com);
+                    //向组件原型添加路由对象
+                    com.$router = this;
                 }else{
                     let redirect = route.redirect;
                     let com1 = null;
@@ -138,10 +140,12 @@ router.prototype.pushState = function(obj, path){
  * @param path
  * @returns {number}
  */
-function findByPathIndex(path){
-    for(let i = 0; i < this.routes.length; i++){
-        if(this.routes[i].path === path){
-            return i;
+router.prototype.findByPathIndex = function(path){
+    if(this.routes) {
+        for (let i = 0; i < this.routes.length; i++) {
+            if (this.routes[i].path === path) {
+                return i;
+            }
         }
     }
 }
@@ -163,13 +167,14 @@ router.prototype.hideShowRouter = function () {
 };
 
 //通过下标选择路由
-router.prototype.selectIndex = function(i){
+router.prototype.selectIndex = function(i, query){
     if(this.routes.length > 0 && this.elDom && i >= 0 && i < this.routes.length){
         let route = this.routes[i];
         let comPrototype = this.routes[i].component;
         this.hideShowRouter();
         //解析组件
         let com = this.main.MainTool.methods.parseComponent(comPrototype);
+
         //路由添加视图
         this.main.MainTool.methods.insertAfter(com.elDom, this.elDom);
         //路由添加视图样式
@@ -180,6 +185,10 @@ router.prototype.selectIndex = function(i){
         this.showRouter = route;
         this.index = i;
         this.path = route.path;
+        if(query){
+            //增加携带参数
+            this.query = query;
+        }
         //设置路径
         this.pushState({com: com, query: this.query, index: i, path: route.path}, route.path);
     }else{
@@ -190,16 +199,12 @@ router.prototype.selectIndex = function(i){
 }
 
 //通过路径路由
-router.prototype.push = function (obj){
+router.prototype.goPath = function (obj){
     if(obj.constructor === String){
-        this.selectIndex(findByPathIndex(obj));
+        this.selectIndex(this.findByPathIndex(obj));
     }else if(obj.constructor === Object){
         if(obj.path){
-            this.selectIndex(findByPathIndex(obj.path));
-            if(obj.query){
-                //增加携带参数
-                this.query = obj.query;
-            }
+            this.selectIndex(this.findByPathIndex(obj.path), obj.query);
         }else{
             console.error('没有路由路径');
         }
@@ -247,24 +252,32 @@ router.prototype.install  = function (main) {
         //增加组件
         main.component(this.name, {token: this.token, template: this.template});
 
+        //增加加载组件原型完成运行函数
+        main.addComponentPrototypeLoadRuns(function (comPrototype) {
+            if(comPrototype.token !== that.token) {
+                if (!comPrototype.$router) {
+                    comPrototype.$router = that;
+                } else {
+                    //防止一个路由重复添加
+                    if (comPrototype.$router !== that) {
+                        if (comPrototype.$router.constructor === Array) {
+                            comPrototype.$router.push(that);
+                        } else {
+                            let t = comPrototype.$router;
+                            comPrototype.$router = [];
+                            comPrototype.$router.push(t);
+                            comPrototype.$router.push(that);
+                        }
+                    }
+                }
+            }
+        })
+
         //增加加载组件完成运行函数
         main.addComponentLoadRuns(function (com) {
             if (com.token && com.token === that.token) {
                 that.elDom = com.elDom;
                 that.selectIndex(0);
-            } else {
-                if(!com.$router){
-                    com.$router = that;
-                }else{
-                    if(com.$router.constructor === Array){
-                        com.$router.push(that);
-                    }else{
-                        let t = com.$router;
-                        com.$router = [];
-                        com.$router.push(t);
-                        com.$router.push(that);
-                    }
-                }
             }
         });
     }else{

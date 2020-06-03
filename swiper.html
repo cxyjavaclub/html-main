@@ -28,11 +28,12 @@
             console.log('swiper停用')
         },
         activated: function () {
+            console.log(this.$router)
             console.log('swiper活化')
         },
         mounted: function () {
             // console.log(this.originalDom);
-            console.log(this);
+            // console.log(this);
             setTimeout(() =>{
                 this.aa = 'blue'
             }, 5000)
