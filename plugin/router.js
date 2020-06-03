@@ -172,6 +172,11 @@ router.prototype.selectIndex = function(i, query){
         let route = this.routes[i];
         let comPrototype = this.routes[i].component;
         this.hideShowRouter();
+        //在组件解析之前添加携带参数
+        if(query){
+            //增加携带参数
+            this.query = query;
+        }
         //解析组件
         let com = this.main.MainTool.methods.parseComponent(comPrototype);
 
@@ -185,10 +190,6 @@ router.prototype.selectIndex = function(i, query){
         this.showRouter = route;
         this.index = i;
         this.path = route.path;
-        if(query){
-            //增加携带参数
-            this.query = query;
-        }
         //设置路径
         this.pushState({com: com, query: this.query, index: i, path: route.path}, route.path);
     }else{
