@@ -116,7 +116,7 @@ path.pathDispose = function(path){
  * @param v
  */
 path.disposeAttrValue = function (dom, attr, v) {
-    if(dom && attr && v) {
+    if(dom && attr && v && v.value) {
         let name = dom.tagName.toLocaleLowerCase();
         let attrName = attr.name;
         //这里修改路径处理条件

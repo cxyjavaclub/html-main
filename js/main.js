@@ -717,11 +717,11 @@
                 //组件对象重置
                 this.resetComponentObj(copyCom);
 
-                //解析组件之前
-                this.componentParseFront(copyCom);
 
                 //elDom为假
                 if (!copyCom.elDom) {
+                    //解析组件之前
+                    this.componentParseFront(copyCom);
                     copyCom.elDom = document.createTextNode('');
                     //组件加载完成
                     this.componentLoad(copyCom);
@@ -729,7 +729,7 @@
                 }
                 //通过组件生成新的dom
                 this.createNewComElDom(copyCom);
-                let c = copyCom.elDom
+
                 //解析组件m-if
                 let mIfFlag = this.parseComponentMIF(copyCom);
 
@@ -746,6 +746,9 @@
 
                     //解析组件标签的属性
                     this.parseComponentLabelAttr(comLabel, parentCom, copyCom);
+
+                    //解析组件之前
+                    this.componentParseFront(copyCom);
 
                     //解析所有的类型标签
                     this.parseAllTypeLabel(copyCom.elDom, copyCom, null, function (com) {
