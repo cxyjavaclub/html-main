@@ -2250,7 +2250,6 @@
             },
             //通过名称获取组件
             getFindNameComponent: function (newCom, name) {
-                console.log(name);
                 let originalName = name.toLocaleLowerCase();
                 //解析驼峰命名
                 name = this.parseHumpName(originalName)
@@ -2259,7 +2258,6 @@
                 if (!com) {
                     com = this.getFindNameGlobalComponent(name, originalName);
                 }
-                console.log(com);
                 return com;
             },
 
