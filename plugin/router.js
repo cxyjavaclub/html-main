@@ -1,4 +1,4 @@
-//添加插件
+//添加路由插件
 function router(obj){
     this.routes = [];
     if(obj && obj.constructor === Object){
@@ -186,7 +186,7 @@ router.prototype.selectIndex = function(i, query, refreshFlag){
         }
         //当组件是路径时引入组件，减少初次组件加载时间
         if(comPrototype.constructor === String){
-            let c = this.global.input(comPrototype);
+            let c = this.main.input(comPrototype);
             this.main.MainTool.methods.initComponent(c.name || 'router', c);
             //向组件原型添加路由对象
             c.$router = this;

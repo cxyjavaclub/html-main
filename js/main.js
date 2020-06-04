@@ -25,6 +25,14 @@
         Main.componentLoadRuns = [];
         //组件原型解析完成运行
         Main.componentPrototypeLoadRuns = [];
+        //框架解析普通标签之前运行
+        Main.parseOrdinaryLabelBeforeRuns = [];
+        //框架解析普通标签完成运行
+        Main.parseOrdinaryLabelLoadRuns = [];
+        //框架解析普通属性之前运行
+        Main.parseOrdinaryAttrBeforeRuns = [];
+        //框架解析m-attr属性之前运行
+        Main.parseMAttrAttrBeforeRuns = [];
     })();
 
     /**
@@ -51,6 +59,36 @@
      */
     Main.addComponentPrototypeLoadRuns = function(fun){
         Main.componentPrototypeLoadRuns.push(fun);
+    }
+
+    /**
+     * 添加框架解析普通标签之前运行
+     * @param fun
+     */
+    Main.addParseOrdinaryLabelBeforeRuns = function(fun){
+        Main.parseOrdinaryLabelBeforeRuns.push(fun);
+    }
+
+    /**
+     * 框架解析普通标签完成运行
+     * @param fun
+     */
+    Main.addParseOrdinaryLabelLoadRuns = function(fun){
+        Main.parseOrdinaryLabelLoadRuns.push(fun);
+    }
+    /**
+     * 框架解析普通属性之前运行
+     * @param fun
+     */
+    Main.addParseOrdinaryAttrBeforeRuns = function(fun){
+        Main.parseOrdinaryAttrBeforeRuns.push(fun);
+    }
+    /**
+     * 框架解析m-attr属性之前运行
+     * @param fun
+     */
+    Main.addParseMAttrAttrBeforeRuns= function(fun){
+        Main.parseMAttrAttrBeforeRuns.push(fun);
     }
 
     /**
@@ -422,6 +460,57 @@
             },
 
             /**
+             * 框架解析普通标签之前运行
+             * @param dom  dom元素
+             * @param comObj 组件对象
+             */
+            parseOrdinaryLabelBefore: function (dom, comObj) {
+                //框架解析普通标签之前运行
+                for (const p of Main.parseOrdinaryLabelBeforeRuns) {
+                    p(dom, comObj);
+                }
+            },
+
+            /**
+             * 框架解析普通标签完成运行
+             * @param dom  dom元素
+             * @param comObj 组件对象
+             */
+            parseOrdinaryLabelLoad: function (dom, comObj) {
+                //框架解析普通标签完成运行
+                for (const p of Main.parseOrdinaryLabelLoadRuns) {
+                    p(dom, comObj);
+                }
+            },
+
+            /**
+             * 框架解析m-attr属性之前运行
+             * @param type 0:普通html标签， 1：组件标签
+             * @param o    携带已解析的值为对象对象里只有一个属性就是value
+             * @param attr 经过属性加工厂加工过的属性 可能为空
+             * @param dom  dom元素
+             * @param comObj 组件对象
+             */
+            parseMAttrAttrBefore: function (type, o, attr, dom, comObj) {
+                //框架解析m-attr属性之前运行
+                for (const p of Main.parseMAttrAttrBeforeRuns) {
+                    p(type, o, attr, dom, comObj);
+                }
+            },
+
+            /**
+             * 框架解析普通属性之前运行
+             * @param attr 经过属性加工厂加工过的属性 可能为空
+             * @param dom dom元素
+             * @param comObj 组件对象
+             */
+            parseOrdinaryAttrBefore: function (attr, dom, comObj) {
+                //框架解析普通属性之前运行
+                for (const p of Main.parseOrdinaryAttrBeforeRuns) {
+                    p(attr, dom, comObj);
+                }
+            },
+            /**
              * 组件解析之前完成
              */
             componentParseFront: function (comObj) {
@@ -578,9 +667,13 @@
                             this.runFunction(funCom, newCom);
                             this.componentAddDomLoad(newCom);
                         } else {
+                            //框架解析普通标签之前运行
+                            this.parseOrdinaryLabelBefore(dom, comObj);
                             //解析普通html标签
                             this.parseOrdinaryLabel(dom, comObj);
                             this.runFunction(funHtml, dom);
+                            //框架解析普通标签完成运行
+                            this.parseOrdinaryLabelLoad(dom, comObj);
                         }
                     } else {
                         if (funSlot) {
@@ -797,16 +890,22 @@
                 let newAttrs = this.attrProcessingPlant(dom, 0);
                 //解析每一个属性
                 for (let a of newAttrs) {
-                    //解析ref
-                    this.parseComponentRef(a, dom, comObj);
+                    //解析普通属性
+                    if(this.parseOrdinaryAttr(a, dom, comObj)){
+                        dom.setAttribute(a.name, a.value);
+                    }else {
+                        //解析ref
+                        this.parseComponentRef(a, dom, comObj);
 
-                    //解析m-attr
-                    this.parseComponentMAttr(a, dom, comObj);
+                        //解析m-attr
+                        this.parseComponentMAttr(a, dom, comObj);
 
-                    //解析组件m-js
-                    this.parseComponentMJs(a, dom, comObj);
-                    //解析组件m-text
-                    this.parseComponentMText(a, dom, comObj);
+                        //解析组件m-js
+                        this.parseComponentMJs(a, dom, comObj);
+
+                        //解析组件m-text
+                        this.parseComponentMText(a, dom, comObj);
+                    }
                 }
             },
 
@@ -2573,7 +2672,6 @@
                     let runObj = this.parseFrameString(comObj, obj.value);
                     let that = this;
                     this.depNamesDispose(function (object, key, parameterObj, length) {
-
                         if (length === 2 && obj.incidentName === 'value' && dom.tagName.toLocaleLowerCase() === 'input') {
                             let f = function () {
                                 object[key] = dom.value;
@@ -2588,13 +2686,19 @@
                                 }
                             }
                         }
-
                         new Main.Subscriber(object, key, function () {
-                            let value = that.parseSpecialMAttrString(obj.incidentName, dom, that.parseFrameString(parameterObj, obj.value), runObj);
+                            let v = that.parseFrameString(parameterObj, obj.value);
+                            let o = {value: v};
+                            that.parseMAttrAttrBefore(0, o, attr, dom, comObj);
+                            let value = that.parseSpecialMAttrString(obj.incidentName, dom, o.value, runObj);
                             runObj = value;
                             that.addDomAttr(dom, obj.incidentName, value);
                         })
                     }, comObj.parseAddObjData)
+
+                    let o = {value: runObj};
+                    this.parseMAttrAttrBefore(0, o, attr, dom, comObj);
+                    runObj = o.value;
 
                     //特殊属性处理
                     runObj = this.parseSpecialMAttrString(obj.incidentName, dom, runObj);
@@ -2633,9 +2737,15 @@
                     if (type === 0) {
                         let that = this;
                         runValue = this.parseFrameString(parentComObj, value);
+                        let o = {value: runValue};
+                        this.parseMAttrAttrBefore(1, o, null, dom, comObj);
+                        runValue = o.value;
                         this.depNamesDispose(function (object, key, parameterObj) {
                             new Main.Subscriber(object, key, function () {
-                                let v = that.parseSpecialMAttrString(name, dom, that.parseFrameString(parameterObj, value), runValue);
+                                let pv = that.parseFrameString(parameterObj, value);
+                                let o = {value: pv};
+                                that.parseMAttrAttrBefore(1, o, null, dom, comObj);
+                                let v = that.parseSpecialMAttrString(name, dom, o.value, runValue);
                                 runValue = v;
                                 that.addDomAttr(dom, name, runValue);
                             })
@@ -3081,6 +3191,26 @@
                         break;
                 }
             },
+
+
+            /**
+             * 解析普通属性
+             * @param attr
+             * @param dom
+             * @param comObj
+             * @returns {boolean}
+             */
+            parseOrdinaryAttr: function (attr, dom, comObj) {
+                let attrName = attr.name;
+                let mJs = /^m-js:/.test(attrName)
+                let mAttr = /^m-attr:/.test(attrName)
+                let mText = /^m-text:/.test(attrName)
+                if (!(attrName === 'ref' || mJs || mAttr || mText)) {
+                    this.parseOrdinaryAttrBefore(attr, dom, comObj);
+                    return true;
+                }
+                return false;
+            },
             /**
              * 解析组件标签的常规属性
              * @param attr
@@ -3088,9 +3218,7 @@
              */
             parseComponentLabelRoutine: function (attr, comObj) {
                 let name = attr.name;
-                let mJs = this.searchAttrM(attr, /m-js/);
-                let mAttr = this.searchAttrM(attr, /m-attr/);
-                if (!(name === 'ref' || mJs.flag || mAttr.flag)) {
+                if (this.parseOrdinaryAttr(attr, comObj.elDom, comObj)) {
                     //添加解析组件标签属性
                     this.addComponentLabelAttr(name, attr.value, 1, comObj);
                 }
@@ -3102,14 +3230,12 @@
         }
     };
 
-    global.Main = Main;
-
     /**
      * 模块化导入
      * @param href
      * @returns {{input}|*}
      */
-    global.input = function (href) {
+    Main.input = function (href) {
         function load(href) {
             let xhr = new XMLHttpRequest(),
                 okStatus = document.location.protocol === "file:" ? 0 : 200;
@@ -3197,4 +3323,27 @@
         }
         return output;
     }
+
+    /**
+     * 获取项目地址
+     * @returns {string}
+     */
+    Main.getRootPathWeb = function() {
+        //获取当前网址，如： http://localhost:63342/swiper/html/index.html
+        let curWwwPath = window.document.location.href;
+        //获取主机地址之后的目录，如： swiper/html/index.html
+        let pathName = window.document.location.pathname;
+        let pos = curWwwPath.indexOf(pathName);
+        //获取主机地址，如： http://localhost:63342
+        let localhostPath = curWwwPath.substring(0, pos);
+        //获取带"/"的项目名，如：/swiper/html
+        let projectName = pathName.substring(0, pathName.substr(1).lastIndexOf('/') + 1);
+        return localhostPath + projectName;
+    }
+
+    //写入项目地址
+    Main.projectPath = Main.getRootPathWeb();
+    Main.global = global;
+    global.Main = Main;
+    global.input = Main.input;
 })(this);

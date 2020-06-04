@@ -14,13 +14,25 @@
         <button @click="aab">单击</button>
         <button @click="aab1">上</button>
         <button @click="aab2">下</button>
-        <button @click="aab3">跳</button>
+        <button :aa="href" @click="aab3">跳</button>
+        <img src="~input/img/1.jpg"/>
+        <a :href="href">12</a>
         <router-view></router-view>
         <swiper a-b="121" :t-s="img"  :time-str="img" @click="aab" :img="img" :imgs="imgs"></swiper>
     </div>
 <script src="js/main.js"></script>
 <script>
-    let test1 = input('test1.html');
+
+    let path = input('plugin/path.js');
+    path.setAlias({
+        'at': '@',
+        'input': '/swiper/轮播图设计改进'
+    })
+    path.setCondition({name: 'button', value: 'aa'})
+    Main.use(path);
+
+
+    let test1 = input('~input/test1.html');
     // let swiper = input('swiper.html');
     let swiper1 = input('swiper.html');
     let router = input('plugin/router.js');
@@ -40,6 +52,7 @@
             }
         ]
     });
+
     Main.use(bb);
 
 
@@ -49,10 +62,16 @@
             aa: 456,
             flag: true,
             imgs:['img/1.jpg', 'img/2.jpg', 'img/3.jpg'],
-            img: 'img/3.jpg'
+            img: 'img/3.jpg',
+            href: '~at/img/1.jpg'
         },
         components:{
             swiper: swiper1
+        },
+        mounted: function () {
+            setTimeout(() =>{
+                this.href = '~input/img/2.jpg'
+            }, 3000)
         },
         methods: {
             aab: function () {
