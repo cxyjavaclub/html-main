@@ -15,13 +15,15 @@
         <button @click="aab1">上</button>
         <button @click="aab2">下</button>
         <button :aa="href" @click="aab3">跳</button>
-        <img src="~input/img/1.jpg"/>
         <a :href="href">12</a>
-        <router-view></router-view>
-        <swiper a-b="121" :t-s="img"  :time-str="img" @click="aab" :img="img" :imgs="imgs"></swiper>
+        <router-view id="view"></router-view>
+        <img src="~at/img/1.jpg"/>
+<!--        <swiper a-b="121" :t-s="img"  :time-str="img" @click="aab" :img="img" :imgs="imgs"></swiper>-->
     </div>
 <script src="js/main.js"></script>
 <script>
+    let cccc = document.getElementById('view')
+    console.log({cccc});
 
     let path = input('plugin/path.js');
     path.setAlias({
@@ -39,7 +41,7 @@
     let bb = new router({
         routes: [
             {
-                path: Main.projectPath + '/index1.html',
+                path: '/home',
                 redirect: '/htm2'
             },
             {

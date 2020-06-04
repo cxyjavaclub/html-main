@@ -658,7 +658,7 @@
                     let slotObj = this.parseComponentSlot(dom, comObj, funSlot && funSlot.on);
                     if (!slotObj) {
                         //通过名称获取组件
-                        let name = dom.tagName.toLowerCase();
+                        let name = dom.tagName;
                         let com = this.getFindNameComponent(comObj, name);
                         //获取到组件
                         if (com) {
@@ -2250,18 +2250,41 @@
             },
             //通过名称获取组件
             getFindNameComponent: function (newCom, name) {
-                let com = this.getFindNamePartComponent(newCom, name);
+                console.log(name);
+                let originalName = name.toLocaleLowerCase();
+                //解析驼峰命名
+                name = this.parseHumpName(originalName)
+
+                let com = this.getFindNamePartComponent(newCom, name, originalName);
                 if (!com) {
-                    com = this.getFindNameGlobalComponent(name);
+                    com = this.getFindNameGlobalComponent(name, originalName);
                 }
+                console.log(com);
                 return com;
             },
+
+            /**
+             * 组件名称匹配
+             * @param n1
+             * @param n2
+             * @param originalName
+             * @returns {boolean}
+             */
+            componentNameMatch: function (n1, n2, originalName) {
+                n2 = n2.charAt(0).toLocaleLowerCase() + n2.substring(1);
+                if(n1 === n2){
+                    return true;
+                }
+                if(n2 === originalName){
+                    return true;
+                }
+                return false;
+            },
+
             //通过名称获取局部组件
-            getFindNamePartComponent: function (newCom, name) {
+            getFindNamePartComponent: function (newCom, name, originalName) {
                 for(let [n, value] of Object.entries(newCom.children)){
-                    let n1 = n.toLocaleLowerCase();
-                    let n2 = name.toLocaleLowerCase();
-                    if(n1 == n2){
+                    if(this.componentNameMatch(name, n, originalName)){
                         //通过名称查找局部组件
                         return value;
                     }
@@ -2269,11 +2292,9 @@
             },
 
             //通过名称获取全局组件
-            getFindNameGlobalComponent: function (name) {
+            getFindNameGlobalComponent: function (name, originalName) {
                 for(let [n, value] of Object.entries(Main.globalComponents)){
-                    let n1 = n.toLocaleLowerCase();
-                    let n2 = name.toLocaleLowerCase();
-                    if(n1 == n2){
+                    if(this.componentNameMatch(name, n, originalName)){
                         //通过名称查找全局组件
                         return value;
                     }
@@ -2372,7 +2393,9 @@
                     let strArr = name.split('-');
                     str = strArr[0];
                     for (let i = 1; i < strArr.length; i++) {
-                        str += strArr[i].charAt(0).toUpperCase() + strArr[i].substring(1);
+                        if(strArr[i]) {
+                            str += strArr[i].charAt(0).toUpperCase() + strArr[i].substring(1);
+                        }
                     }
                 }
                 return str;
