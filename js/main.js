@@ -2404,8 +2404,18 @@
                     }
                     //解析驼峰命名
                     obj.incidentName = this.parseHumpName(obj.incidentName);
+                    //解析函数参数列表
+                    let parameterAdd = [];
+                    let parseObj = this.parseFunctionParameterList(obj.value);
+                    if(parseObj){
+                        obj.value = parseObj.funName;
+                        for(let c of parseObj.nameList){
+                            let v = this.parseFrameString(comObj, c);
+                            parameterAdd.push(v);
+                        }
+                    }
                     childComObj.$emits[obj.incidentName] = function (...arr) {
-                        comObj[obj.value].apply(comObj, arr);
+                        comObj[obj.value].apply(comObj, parameterAdd.concat(arr));
                     }
                 }, this);
             },
@@ -2607,6 +2617,38 @@
                     }
                 }
             },
+
+            /**
+             * 解析函数参数列表
+             * @param str
+             * @returns
+             */
+            parseFunctionParameterList: function (str) {
+                let ex = /\(.*?\)/.exec(str);
+                if(ex && ex.length != 0) {
+                    let e = ex[0];
+                    e = e.trim();
+                    if(e) {
+                        let funName = str.replace(e, '');
+                        e = e.substring(1, e.length - 1);
+                        let nameList = [];
+                        let split = e.split(',');
+                        for(let s of split){
+                            let s1 = s.trim();
+                            if(s1){
+                                nameList.push(s1) ;
+                            }
+                        }
+                        return {
+                            funName: funName,
+                            nameList: nameList,
+                            parameterList: e
+                        }
+                    }
+                }
+                return null;
+            },
+
             /**
              * 解析组件m-js
              * @param attr 属性对象
@@ -2615,32 +2657,27 @@
              */
             parseComponentMJs: function (attr, dom, comObj) {
                 this.parseAttrMJS(attr, function (obj) {
-                    let ex = /\(.*?\)/.exec(obj.value);
                     let funRun;
-                    if(ex && ex.length != 0){
+                    //解析函数参数列表
+                    let parseObj = this.parseFunctionParameterList(obj.value);
+                    if(parseObj){
                         let csStr= '';
-                        let e = ex[0];
-                        obj.value = obj.value.replace(e, '');
-                        e = e.substring(1, e.length - 1);
-                        let csList = e.split(',');
-                        for(let c of csList){
-                            if(c){
-                                c = c.trim();
-                                if(c != '$dom'){
-                                    let v = this.parseFrameString(comObj, c);
-                                    csStr += `${v},`;
-                                }else{
-                                    csStr += '$dom,';
-                                }
+                        obj.value = parseObj.funName;
+                        for(let c of parseObj.nameList){
+                            if(c != '$dom' && c != '$event'){
+                                let v = this.parseFrameString(comObj, c);
+                                csStr += `${v},`;
+                            }else{
+                                csStr += c + ',';
                             }
                         }
                         if(csStr){
                             csStr = csStr.substring(0, csStr.length - 1);
-                            csStr = `obj.${obj.value}(event,${csStr})`;
-                            funRun = new Function('event', 'obj', '$dom', csStr);
+                            csStr = `obj.${obj.value}(${csStr})`;
+                            funRun = new Function('$event', 'obj', '$dom', csStr);
                         }
-
                     }
+
                     //添加属性事件
                     let f = function () {
                         console.error(dom.outerHTML + ':不存在该事件！！！')

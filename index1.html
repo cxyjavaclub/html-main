@@ -15,6 +15,7 @@
         <button @click="aab1">上</button>
         <button @click="aab2">下</button>
         <button :aa="href" @click="aab3">跳</button>
+        <button @click="aab4($event, $dom, 1)">测试</button>
         <a :href="href">{{ccbbc.aa}}</a>
 <!--        <router-view id="view"></router-view>-->
 <!--        <img src="~at/img/1.jpg"/>-->
@@ -85,6 +86,11 @@
             },
             aab3: function () {
                 this.$router.go(0);
+            },
+            aab4: function (a, b, c) {
+                console.log(a)
+                console.log(b)
+                console.log(c)
             }
         }
     });
