@@ -394,20 +394,29 @@
 //======================================================================
 
             /**
+             * 组件数据this化
+             * @param storageObj
+             */
+            componentDataThisChange: function (storageObj) {
+                for (const [name, value] of Object.entries(storageObj)) {
+                    if (name === 'data' || name === 'methods'  || name === '$props') {
+                        for (const v in value) {
+                            this.resetComponentKeys(storageObj, name, v);
+                        }
+                    }
+                }
+            },
+
+            /**
              * 组件对象重置
              * @param storageObj
              */
             resetComponentObj: function (storageObj) {
                 for (const [name, value] of Object.entries(storageObj)) {
-                    if (name === 'data' || name === 'methods') {
-                        if (name === 'data') {
-                            this.observe(value);
-                        }
+                    if (name === 'data' || name === '$props') {
+                        this.observe(value);
                         for (const v in value) {
-                            this.resetComponentKeys(storageObj, name, v);
-                            if (name === 'data') {
-                                this.rewriteArrayPrototypeFun(value[v], value, v)
-                            }
+                            this.rewriteArrayPrototypeFun(value[v], value, v)
                         }
                     }
                 }
@@ -567,21 +576,36 @@
                 //通过组件原型生成组件
                 newCom = this.findPrototypeCreateComponent(newCom);
 
-                //组件重置
-                this.resetComponentObj(newCom);
-
                 //解析组件m-if
                 let mIfFlag = this.parseComponentMIF(newCom);
                 // //解析所有的类型标签
                 if (mIfFlag) {
                     Main.$root = newCom;
+
                     //首先隐藏
                     let dom = document.createTextNode('');
+
+                    //替换标签
                     this.replaceLabelElement(dom, newCom.elDom);
+
+                    //组件数据this化
+                    this.componentDataThisChange(newCom);
+
+                    //组件解析之前完成
                     this.componentParseFront(newCom);
+
+                    //组件重置
+                    this.resetComponentObj(newCom);
+
+                    //解析所有的类型标签
                     this.parseAllTypeLabel(newCom.elDom, newCom);
+
+                    //组件加载完成
                     this.componentLoad(newCom);
+
+                    //组件解析且添加到dom完成
                     this.componentAddDomLoad(newCom);
+
                     //解析完成显示
                     this.replaceLabelElement(newCom.elDom, dom);
                     Main.$root = null;
@@ -714,10 +738,6 @@
                 //通过组件生成新的组件
                 let copyCom = this.findPrototypeCreateComponent(comPrototype);
 
-                //组件对象重置
-                this.resetComponentObj(copyCom);
-
-
                 //elDom为假
                 if (!copyCom.elDom) {
                     //解析组件之前
@@ -747,8 +767,14 @@
                     //解析组件标签的属性
                     this.parseComponentLabelAttr(comLabel, parentCom, copyCom);
 
+                    //组件数据this化
+                    this.componentDataThisChange(copyCom);
+
                     //解析组件之前
                     this.componentParseFront(copyCom);
+
+                    //组件对象重置
+                    this.resetComponentObj(copyCom);
 
                     //解析所有的类型标签
                     this.parseAllTypeLabel(copyCom.elDom, copyCom, null, function (com) {
@@ -3139,15 +3165,8 @@
                     if (type === 0) {
                         value = this.parseFrameString(parentComObj, value);
                     }
-                    Object.defineProperty(comObj.$props, name, {
-                        enumerable: true,
-                        configurable: true,
-                        get: function () {
-                            let v = value;
-                            that.depIndirectDispose(null, comObj.$props, name);
-                            return v;
-                        },
-                    });
+                    comObj.$props[name] = value;
+
                     return true;
                 }
                 return false;
@@ -3177,16 +3196,6 @@
                                 }
                             });
                         }
-                        Object.keys(comObj.$props).forEach(function (key) {
-                            Object.defineProperty(comObj, key, {
-                                enumerable: true,
-                                configurable: true,
-                                get: function proxyGetter() {
-                                    that.depIndirectDispose(null, comObj.$props, key);
-                                    return comObj.$props[key];
-                                }
-                            });
-                        });
                     }
                 }
             },

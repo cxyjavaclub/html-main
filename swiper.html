@@ -4,6 +4,7 @@
         <div @click="divClick">
             {{aa}}
         </div>
+        <h1>{{ccb.aa}}</h1>
     </div>
 </template>
 <script>
@@ -15,6 +16,7 @@
             },
             imgs: Array,
             timeStr: String,
+            ccb: String
         },
         data: function () {
             return {
@@ -22,7 +24,8 @@
             }
         },
         created: function(){
-            this.hhh = '123'
+            // this.ccb = 123;
+            console.log(this.ccb)
             // console.log(this.$router.query)
             // console.log(this.$router)
         },
@@ -36,9 +39,10 @@
         mounted: function () {
             // console.log(this.$router.query)
             // console.log(this.originalDom);
-            // console.log(this);
+            console.log(this);
             setTimeout(() =>{
                 this.aa = 'blue'
+                this.ccb.aa = '789'
             }, 5000)
         },
         methods: {
