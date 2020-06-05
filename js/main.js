@@ -2462,6 +2462,12 @@
                         let ex = /[^{}]*?{[^{}]*?}/g;
                         if (style.scoped) {
                             let exec;
+                            //设置组件标签局部属性
+                            let uuid = 'm-css-' + this.getUUid(16);
+                            let uuidStr = '[' + uuid + ']';
+                            //将写入组件样式uuid属性
+                            newCom.style.uuid = uuid;
+
                             while(exec = ex.exec(str)){
                                 let addIndex = exec.index;
                                 let ex1 = /^[^{}]*/g;
@@ -2481,12 +2487,6 @@
                                             name = s1.substring(0, search);
                                             addIndex += search;
                                         }
-                                        let elms = dom.querySelectorAll(name);
-                                        let uuid = 'm-css-' + this.getUUid(16);
-                                        let uuidStr = '[' + uuid + ']';
-                                        for (let e of elms) {
-                                            e.setAttribute(uuid, '');
-                                        }
                                         str = str.slice(0, addIndex) + uuidStr + str.slice(addIndex);
                                         if(search !== (-1)){
                                             addIndex += s1.length - search;
@@ -2496,6 +2496,8 @@
                                     }
                                 }
                             }
+                            //写入dom的uuid
+                            this.writeDomUUID(dom, uuid);
                             //将组件模板更新
                             newCom.template = dom.innerHTML;
                         }
@@ -2503,6 +2505,18 @@
                         newCom.style.value = str;
                     }
                 }
+            },
+
+            /**
+             * 写入dom的uuid
+             * @param dom
+             * @param uuid
+             */
+            writeDomUUID: function (dom, uuid) {
+                for (let e of dom.children) {
+                    this.writeDomUUID(e, uuid);
+                }
+                dom.setAttribute(uuid, '');
             },
             //字符串格式化
             stringFormat: function (str) {
