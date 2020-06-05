@@ -3243,7 +3243,11 @@
                                 comObj.$props[key] = null;
                                 if (props[key].constructor === Object) {
                                     let d = props[key].default;
-                                    comObj.$props[key] = d === undefined ? null : d;
+                                    if(d && d.constructor === Function){
+                                        comObj.$props[key] = d();
+                                    }else{
+                                        comObj.$props[key] = d === undefined ? null : d;
+                                    }
                                 }
                             });
                         }
