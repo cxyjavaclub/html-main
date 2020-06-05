@@ -33,6 +33,8 @@
         Main.parseOrdinaryAttrBeforeRuns = [];
         //框架解析m-attr属性之前运行
         Main.parseMAttrAttrBeforeRuns = [];
+        //引入路径（组件input属性的css和js）之前运行
+        Main.introducePathBeforeRuns = [];
     })();
 
     /**
@@ -89,6 +91,13 @@
      */
     Main.addParseMAttrAttrBeforeRuns= function(fun){
         Main.parseMAttrAttrBeforeRuns.push(fun);
+    }
+    /**
+     * 引入路径（组件input属性的css和js）之前运行
+     * @param fun
+     */
+    Main.addIntroducePathBeforeRuns= function(fun){
+        Main.introducePathBeforeRuns.push(fun);
     }
 
     /**
@@ -453,16 +462,21 @@
                     if (value.constructor === Array) {
                         let head = document.querySelector('head');
                         let labelName = type === 0 ? 'link' : 'script';
-                        for (const s of value) {
-                            let label = this.createLabel(labelName);
-                            if (type === 0) {
-                                label.setAttribute('rel', 'stylesheet');
-                                label.setAttribute('href', s);
-                            } else if (type === 1) {
-                                label.setAttribute('type', 'text/javascript');
-                                label.setAttribute('src', s);
+                        for (let s of value) {
+                            if(s) {
+                                let label = this.createLabel(labelName);
+                                let o = {value: s}
+                                this.introducePathBefore(type, o);
+                                s = o.value;
+                                if (type === 0) {
+                                    label.setAttribute('rel', 'stylesheet');
+                                    label.setAttribute('href', s);
+                                } else if (type === 1) {
+                                    label.setAttribute('type', 'text/javascript');
+                                    label.setAttribute('src', s);
+                                }
+                                head.appendChild(label);
                             }
-                            head.appendChild(label);
                         }
                     }
                 }
@@ -489,6 +503,18 @@
                 //框架解析普通标签完成运行
                 for (const p of Main.parseOrdinaryLabelLoadRuns) {
                     p(dom, comObj);
+                }
+            },
+
+            /**
+             * 框架解析m-attr属性之前运行
+             * @param type 0:css， 1：js, 2局部css
+             * @param o    携带已解析的值为对象对象里只有一个属性就是value
+             */
+            introducePathBefore: function (type, o) {
+                //框架解析m-attr属性之前运行
+                for (const p of Main.introducePathBeforeRuns) {
+                    p(type, o);
                 }
             },
 
@@ -3376,13 +3402,18 @@
                             let name = l.tagName.toLocaleLowerCase();
                             if (name === 'list') {
                                 let acc = l.innerText;
-                                let str = load(acc);
-                                output.style.value += str;
+                                if(acc) {
+                                    let o = {value: acc};
+                                    Main.MainTool.methods.introducePathBefore(2, o);
+                                    acc = o.value;
+                                    let str = load(acc);
+                                    output.style.value += str;
+                                }
                             }
                         }
                     } else if (name === 'list') {
                         let acc = c.innerText;
-                        if (output.input) {
+                        if (acc && output.input) {
                             let css = output.input.css;
                             if (css) {
                                 if (css.constructor === String) {

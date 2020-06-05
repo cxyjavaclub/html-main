@@ -99,12 +99,14 @@ path.disposeBLH = function(path){
 
 
 path.pathDispose = function(path){
-    let charAt = path.charAt(0);
-    if(charAt === '~'){
-        path = this.disposeBLH(path);
-    }
-    if(charAt === '@'){
-        path = this.disposeAt(path);
+    if(path) {
+        let charAt = path.charAt(0);
+        if (charAt === '~') {
+            path = this.disposeBLH(path);
+        }
+        if (charAt === '@') {
+            path = this.disposeAt(path);
+        }
     }
     return path;
 }
@@ -131,6 +133,7 @@ path.disposeAttrValue = function (dom, attr, v) {
 path.install = function(main){
     let that = this;
     this.main = main;
+    main.path = path;
     this.projectPath = main.projectPath;
 
     //增强组件的input方法
@@ -145,6 +148,7 @@ path.install = function(main){
     main.addParseOrdinaryAttrBeforeRuns(function (attr, dom) {
         that.disposeAttrValue(dom, attr, attr);
     });
+
     //增加解析m-attr属性之前运行
     main.addParseMAttrAttrBeforeRuns(function (type, o, attr, dom) {
         let a = null;
@@ -154,5 +158,12 @@ path.install = function(main){
         }
         that.disposeAttrValue(dom, a, o);
     });
+
+    //引入路径（组件input属性的css和js）之前运行
+    main.addIntroducePathBeforeRuns(function (type, o) {
+        if(o){
+            o.value = that.pathDispose(o.value);
+        }
+    })
 }
 output = path;
