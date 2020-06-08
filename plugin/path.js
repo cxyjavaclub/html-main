@@ -136,11 +136,11 @@ path.install = function(main){
     main.path = path;
     this.projectPath = main.projectPath;
 
-    //增强组件的input方法
-    let input = main.input;
-    main.input = function (href) {
+    //增强组件的load方法
+    let load = main.load;
+    main.load = function (href) {
         href = that.pathDispose(href);
-        return input(href);
+        return load(href);
     }
     main.global.input = main.input;
 

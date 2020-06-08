@@ -2487,6 +2487,73 @@
                     }
                 }
             },
+
+            /**
+             * 处理样式的@Import
+             * @param str
+             * @returns {*}
+             */
+            disposeStyleImport: function (str) {
+                //清除@import
+                let ex = /@import[^;]*;/g
+                let exec;
+                let strArr = []
+                while(exec = ex.exec(str)){
+                    let s = exec[0];
+                    strArr.push(s)
+                    str = str.replace(exec[0], '');
+                    ex.lastIndex -= exec[0].length;
+                }
+                for(let s of strArr){
+                    let sExec1 = /['"][^'"]*['"]/.exec(s);
+                    if(sExec1){
+                        let s1 = sExec1[0].substring(1, sExec1[0].length -1);
+                        let s2 = Main.load(s1);
+                        if(s2){
+                            str += this.disposeStyleImport(s2);
+                        }
+                    }
+                }
+                return str;
+            },
+
+            /**
+             * 处理空的特殊样式如@media和@keyframes
+             * @param str
+             * @returns {*}
+             */
+            disposeStyleNoneSpecial: function (str) {
+                let ex = /@[^{}]*?{[^{}]*?}/g
+                let exec;
+                while(exec = ex.exec(str)){
+                    str = str.replace(exec[0], '');
+                    ex.lastIndex -= exec[0].length;
+                }
+                return str;
+            },
+
+            /**
+             * 样式特殊处理如css3动画@keyframes但不处理媒体查询
+             * 由于css3动画无法做局部化所以注意命名不要重复
+             * @param str
+             * @returns {{str: *, extractStr: string}}
+             */
+            disposeStyleSpecial: function (str) {
+                let exx = /@(?!media)[^{}]*?{[\s\S]*?}}/g
+                let exec;
+                let extractStr = ''
+                while(exec = exx.exec(str)){
+                    console.log(exec);
+                    extractStr += exec[0];
+                    str = str.replace(exec[0], '');
+                    exx.lastIndex -= exec[0].length;
+                }
+                return {
+                    extractStr: extractStr,
+                    str: str
+                }
+            },
+
             //组件样式初始化
             componentStyleInit: function (newCom) {
                 if (newCom.template) {
@@ -2494,13 +2561,27 @@
                     let style = newCom.style;
                     if (style) {
                         let str = style.value;
+
+                        //处理样式的@Import
+                        str = this.disposeStyleImport(str);
+
+                        //字符串格式化去除换行和空格
                         str = this.stringFormat(str);
-                        let ex = /[^{}]*?{[^{}]*?}/g;
+
                         if (style.scoped) {
+                            //处理空的特殊样式如@media和@keyframes
+                            str = this.disposeStyleNoneSpecial(str);
+
+                            //样式特殊处理如css3动画@keyframes但不处理媒体查询
+                            let strObj = this.disposeStyleSpecial(str);
+                            str = strObj.str;
+
+                            let ex = /[^{}]*?{[^{}]*?}/g;
                             let exec;
                             //设置组件标签局部属性
                             let uuid = 'm-css-' + this.getUUid(16);
                             let uuidStr = '[' + uuid + ']';
+
                             //将写入组件样式uuid属性
                             newCom.style.uuid = uuid;
 
@@ -2508,7 +2589,7 @@
                                 let addIndex = exec.index;
                                 let ex1 = /^[^{}]*/g;
                                 let exec1 = ex1.exec(exec[0]);
-                                if(exec1 && (exec1.length > 0) && exec1[0] && (exec1[0].search('@') === -1) && (exec1[0].search(':') === -1)){
+                                if(exec1 && (exec1.length > 0) && exec1[0] && (exec1[0].search('@') === -1)){
                                     addIndex += exec1.index;
                                     let s = exec1[0];
                                     let split = s.split(',');
@@ -2536,7 +2617,11 @@
                             this.writeDomUUID(dom, uuid);
                             //将组件模板更新
                             newCom.template = dom.innerHTML;
+
+                            //重组样式
+                            str = strObj.extractStr + str;
                         }
+                        console.log(str)
                         //将组件样式进行更新
                         newCom.style.value = str;
                     }
@@ -2554,7 +2639,7 @@
                 }
                 dom.setAttribute(uuid, '');
             },
-            //字符串格式化
+            //字符串格式化去除换行和空格
             stringFormat: function (str) {
                 let string = '';
                 if (str) {
@@ -3344,33 +3429,34 @@
         }
     };
 
+    //通过ajax获取文本文件
+     Main.load = function(href) {
+        let xhr = new XMLHttpRequest(),
+            okStatus = document.location.protocol === "file:" ? 0 : 200;
+        xhr.open('GET', href, false);
+        xhr.overrideMimeType("text/html;charset=utf-8");//默认为utf-8
+        xhr.send(null);
+        return xhr.status === okStatus ? xhr.responseText : null;
+    }
+
+    //获取文件后缀
+     Main.getType = function(file) {
+        let filename = file;
+        let index1 = filename.lastIndexOf(".") + 1;
+        let index2 = filename.length;
+        let type = filename.substring(index1, index2);
+        return type;
+    }
+
     /**
      * 模块化导入
      * @param href
      * @returns {{input}|*}
      */
     Main.input = function (href) {
-        function load(href) {
-            let xhr = new XMLHttpRequest(),
-                okStatus = document.location.protocol === "file:" ? 0 : 200;
-            xhr.open('GET', href, false);
-            xhr.overrideMimeType("text/html;charset=utf-8");//默认为utf-8
-            xhr.send(null);
-            return xhr.status === okStatus ? xhr.responseText : null;
-        }
-
-        //获取文件后缀
-        function getType(file) {
-            let filename = file;
-            let index1 = filename.lastIndexOf(".") + 1;
-            let index2 = filename.length;
-            let type = filename.substring(index1, index2);
-            return type;
-        }
-
         let output;
-        let jsStr = load(href);
-        let type = getType(href);
+        let jsStr = Main.load(href);
+        let type = Main.getType(href);
         if (type === 'html' || type === 'main') {
             let div = document.createElement('div');
             div.innerHTML = jsStr;
@@ -3387,55 +3473,6 @@
             output.style = {
                 scoped: style.hasAttribute('scoped'),
                 value: styleText
-            }
-
-            //获取引入样式
-            let inputStyleDoms = div.getElementsByTagName('input-style');
-            if (inputStyleDoms.length > 0) {
-                let inputStyleDom = inputStyleDoms[0];
-                let children = inputStyleDom.children;
-                for (let c of children) {
-                    let name = c.tagName.toLocaleLowerCase();
-                    if (name === 'scoped') {
-                        let ch = c.children;
-                        for (let l of ch) {
-                            let name = l.tagName.toLocaleLowerCase();
-                            if (name === 'list') {
-                                let acc = l.innerText;
-                                if(acc) {
-                                    let o = {value: acc};
-                                    Main.MainTool.methods.introducePathBefore(2, o);
-                                    acc = o.value;
-                                    let str = load(acc);
-                                    output.style.value += str;
-                                }
-                            }
-                        }
-                    } else if (name === 'list') {
-                        let acc = c.innerText;
-                        if (acc && output.input) {
-                            let css = output.input.css;
-                            if (css) {
-                                if (css.constructor === String) {
-                                    output.input.css = [];
-                                    output.input.css.push(css);
-                                    output.input.css.push(acc);
-                                } else if (css.constructor === Array) {
-                                    output.input.css.push(acc);
-                                } else {
-                                    output.input.css = [];
-                                    output.input.css.push(acc);
-                                }
-                            } else {
-                                output.input.css = [acc];
-                            }
-                        } else {
-                            output.input = {
-                                css: [acc]
-                            }
-                        }
-                    }
-                }
             }
         } else {
             output = (new Function('let output = {};' + jsStr + ';return output;'))();
