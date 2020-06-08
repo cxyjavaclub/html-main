@@ -2543,7 +2543,6 @@
                 let exec;
                 let extractStr = ''
                 while(exec = exx.exec(str)){
-                    console.log(exec);
                     extractStr += exec[0];
                     str = str.replace(exec[0], '');
                     exx.lastIndex -= exec[0].length;
@@ -2621,7 +2620,6 @@
                             //重组样式
                             str = strObj.extractStr + str;
                         }
-                        console.log(str)
                         //将组件样式进行更新
                         newCom.style.value = str;
                     }
