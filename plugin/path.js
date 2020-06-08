@@ -133,7 +133,7 @@ path.disposeAttrValue = function (dom, attr, v) {
 path.install = function(main){
     let that = this;
     this.main = main;
-    main.path = path;
+
     this.projectPath = main.projectPath;
 
     //增强组件的load方法

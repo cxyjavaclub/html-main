@@ -15,6 +15,9 @@
         return com;
     }
 
+    //全局容器
+    let globalContainer = {};
+
     /**
      * 添加一下自定义属性
      */
@@ -25,6 +28,8 @@
         Main.componentLoadRuns = [];
         //组件原型解析完成运行
         Main.componentPrototypeLoadRuns = [];
+        //组件加载完成并添加dom运行
+        Main.componentAddDomLoadRuns = [];
         //框架解析普通标签之前运行
         Main.parseOrdinaryLabelBeforeRuns = [];
         //框架解析普通标签完成运行
@@ -49,6 +54,31 @@
     };
 
     /**
+     * 设置全局容器的值
+     * @param name
+     * @param value
+     */
+    Main.setGlobalContainerValue = function(name, value){
+        if(name){
+            globalContainer[name] = value;
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 获取全局容器的值
+     * @param name
+     * @param value
+     */
+    Main.getGlobalContainerValue = function(name){
+        if(name){
+            return globalContainer[name];
+        }
+        return null;
+    }
+
+    /**
      * 添加组件加载完成运行函数
      * @param fun
      */
@@ -61,6 +91,14 @@
      */
     Main.addComponentPrototypeLoadRuns = function(fun){
         Main.componentPrototypeLoadRuns.push(fun);
+    }
+
+    /**
+     * 组件加载完成并添加dom运行
+     * @param fun
+     */
+    Main.addComponentAddDomLoad = function(fun){
+        Main.componentAddDomLoadRuns.push(fun);
     }
 
     /**
@@ -261,6 +299,9 @@
              */
             mergeConfig: function (obj) {
 
+                //添加id，组件唯一标识
+                obj.id = null;
+
                 //添加el
                 if (!obj.el) {
                     obj.el = null;
@@ -354,6 +395,17 @@
                 //组件相关函数对象
                 if (!obj.methods) {
                     obj.methods = {};
+                }
+                //设置框架全局容器
+                obj.$main = {
+                    container:{
+                        set: function (name, value) {
+                            return Main.setGlobalContainerValue(name, value);
+                        },
+                        get: function (name) {
+                            return Main.getGlobalContainerValue(name);
+                        }
+                    }
                 }
             },
 
@@ -569,6 +621,10 @@
              * @param comObj
              */
             componentLoad: function (comObj) {
+                //运行组件加载完成运行函数
+                for (const p of Main.componentLoadRuns) {
+                    p(comObj);
+                }
                 if (comObj.mounted) {
                     comObj.mounted();
                 }
@@ -581,7 +637,7 @@
             componentAddDomLoad: function(comObj){
                 this.inputJsAndCssUrl(comObj);
                 //运行组件加载完成运行函数
-                for (const p of Main.componentLoadRuns) {
+                for (const p of Main.componentAddDomLoadRuns) {
                     p(comObj);
                 }
                 comObj.$root = Main.$root;
@@ -598,6 +654,8 @@
                 let newCom = obj;
                 //初始化组件
                 this.initComponent('showMain', newCom);
+
+                this.createComponentId(newCom);
 
                 //通过组件原型生成组件
                 newCom = this.findPrototypeCreateComponent(newCom);
@@ -637,6 +695,14 @@
                     Main.$root = null;
                 }
                 return newCom;
+            },
+
+            /**
+             * 生成组件id
+             * @param com
+             */
+            createComponentId: function (com) {
+                com.id = this.getUUid(16);
             },
 
             /**
@@ -763,6 +829,9 @@
                 let that = this;
                 //通过组件生成新的组件
                 let copyCom = this.findPrototypeCreateComponent(comPrototype);
+
+                //生成组件id
+                this.createComponentId(copyCom);
 
                 //elDom为假
                 if (!copyCom.elDom) {

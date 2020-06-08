@@ -298,8 +298,8 @@ router.prototype.install  = function (main) {
             }
         })
 
-        //增加加载组件完成运行函数
-        main.addComponentLoadRuns(function (com) {
+        //增加组件加载完成并添加dom运行
+        main.addComponentAddDomLoad(function (com) {
             if (com.token && com.token === that.token) {
                 that.elDom = com.elDom;
                 that.selectIndex(0);

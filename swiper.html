@@ -39,7 +39,23 @@
         mounted: function () {
             // console.log(this.$router.query)
             // console.log(this.originalDom);
+            this.$main.container.set('name', 1455);
+            console.log(this.$main.container.get('name'))
             console.log(this);
+            this.$broadcast.setReceive('7778---88', this, function (t) {
+                console.log(t)
+                alert('广播测试')
+            })
+
+            this.$broadcast.setReceive('7778---88', this, function (t) {
+                console.log(t)
+                alert('广播测试1')
+            })
+
+            this.$broadcast.setReceive('7778---881', this, function (t) {
+                console.log(t)
+                alert('广播测试7778---881')
+            })
             setTimeout(() =>{
                 this.aa = 'blue'
                 this.ccb.aa = '789'

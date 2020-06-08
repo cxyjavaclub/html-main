@@ -12,13 +12,13 @@
 <body>
 
     <div id="app">
-<!--        <button @click="aab">单击</button>-->
+        <button @click="aab">单击</button>
 <!--        <button @click="aab1">上</button>-->
 <!--        <button @click="aab2">下</button>-->
 <!--        <button :aa="href" @click="aab3">跳</button>-->
 <!--        <button @click="aab4($event, $dom, 1)">测试</button>-->
 <!--        <a :href="href">{{ccbbc.aa}}</a>-->
-<!--        <router-view id="view"></router-view>-->
+        <router-view id="view"></router-view>
 <!--        <img src="~at/img/1.jpg"/>-->
         <swiper a-b="121" :t-s="img"  :ccb="ccbbc"  :time-str="img" @click="aab" :img="img" :imgs="imgs"></swiper>
     </div>
@@ -32,6 +32,9 @@
     })
     path.setCondition({name: 'button', value: 'aa'})
     Main.use(path);
+
+    let broadcast = input('plugin/broadcast.js');
+    Main.use(broadcast);
 
 
     let test1 = input('~input/test1.html');
