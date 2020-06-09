@@ -3573,7 +3573,6 @@
         let exec;
         let strArr = []
         while(exec = ex.exec(str)){
-            console.log(exec);
             str = str.replace(exec[0], '');
             ex.lastIndex -= exec[0].length;
             if(exec.length > 1){
