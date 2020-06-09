@@ -2544,11 +2544,22 @@
                     //添加refs属性
                     let refs = comObj.$refs[attr.value];
                     if (refs) {
-                        refs.push(dom);
+                        if(refs.constructor === Array){
+                            refs.push(dom);
+                        }else{
+                            let arr = new Array();
+                            arr.push(refs);
+                            arr.push(dom);
+                            comObj.$refs[attr.value] = arr;
+                        }
                     } else {
-                        let arr = new Array();
-                        arr.push(dom);
-                        comObj.$refs[attr.value] = arr;
+                        if(dom.constructor === Array){
+                            let arr = new Array();
+                            arr.push(dom);
+                            comObj.$refs[attr.value] = arr;
+                        }else{
+                            comObj.$refs[attr.value] = dom;
+                        }
                     }
                     //删除dom属性
                     if (dom.constructor === HTMLHeadingElement) {
@@ -3523,6 +3534,8 @@
     Main.input = function (href) {
         let output;
         let jsStr = Main.load(href);
+        jsStr = Main.inputJs(jsStr);
+
         let type = Main.getType(href);
         if (type === 'html' || type === 'main') {
             let div = document.createElement('div');
@@ -3545,6 +3558,38 @@
             output = (new Function('let output = {};' + jsStr + ';return output;'))();
         }
         return output;
+    }
+
+    /**
+     * 引入js文本到当前js代码块中，
+     * 由于没有使用模块化，不推荐使用，
+     * 注意重复声明错误
+     * 格式：inputJs=('js文件路径');
+     * @param str
+     * @returns {*}
+     */
+    Main.inputJs = function(str){
+        let ex = /inputJs[ \r\n]*=[ \r\n]*(\([\s\S]*?\));/g
+        let exec;
+        let strArr = []
+        while(exec = ex.exec(str)){
+            console.log(exec);
+            str = str.replace(exec[0], '');
+            ex.lastIndex -= exec[0].length;
+            if(exec.length > 1){
+                strArr.push(exec[1])
+            }
+        }
+        for(let s of strArr){
+            if(s && s.length > 4){
+                let s1 = s.substring(2, s.length - 2);
+                let s2 = Main.load(s1);
+                if(s2){
+                    str = Main.inputJs(s2) + str;
+                }
+            }
+        }
+        return str + ';';
     }
 
     /**

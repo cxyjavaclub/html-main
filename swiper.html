@@ -8,6 +8,8 @@
     </div>
 </template>
 <script>
+    let obj = input('@/js/test1.js');
+    console.log(obj)
     output = {
         props: {
             img: {
@@ -37,8 +39,6 @@
             console.log('swiper活化')
         },
         mounted: function () {
-            // console.log(this.$router.query)
-            // console.log(this.originalDom);
             this.$main.container.set('name', 1455);
             console.log(this.$main.container.get('name'))
             console.log(this);
