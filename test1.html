@@ -38,14 +38,15 @@
             console.log('test1活化')
         },
         mounted: function () {
+            this.$main.container.set('test1', {aa: 123});
             setTimeout(() =>{
                 this.cc = 1;
                 this.list = [1, 2, 3, 4, 6, 8]
             }, 5000)
 
             setTimeout(() => {
-                this.$broadcast.send('7778---88')
-                this.$broadcast.send('7778---881')
+                this.$broadcast.send('7778---88', this)
+                this.$broadcast.send('7778---881', this)
             }, 10000)
         },
         components:{

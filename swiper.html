@@ -8,8 +8,11 @@
     </div>
 </template>
 <script>
+    inputJs = ('@/js/test2.js');
+
     let obj = input('@/js/test1.js');
     console.log(obj)
+    console.log(a)
     output = {
         props: {
             img: {
@@ -39,19 +42,15 @@
             console.log('swiper活化')
         },
         mounted: function () {
-            this.$main.container.set('name', 1455);
-            console.log(this.$main.container.get('name'))
-            console.log(this);
-            this.$broadcast.setReceive('7778---88', this, function (t) {
-                console.log(t)
-                alert('广播测试')
-            })
 
-            this.$broadcast.setReceive('7778---88', this, function (t) {
-                console.log(t)
+            console.log(this.$main.container.get('test1'))
+
+            console.log(this);
+            this.$broadcast.setReceive('7778---88', this, 'broadcast1')
+            this.$broadcast.setReceive('7778---88', this, function (t, t1) {
+                this.aa = t;
                 alert('广播测试1')
             })
-
             this.$broadcast.setReceive('7778---881', this, function (t) {
                 console.log(t)
                 alert('广播测试7778---881')
@@ -64,7 +63,12 @@
         methods: {
             divClick: function () {
                 this.$router.back(1);
+            },
+            broadcast1: function (t) {
+                console.log(t)
+                alert('广播调用broadcast1')
             }
+
         }
     }
 </script>

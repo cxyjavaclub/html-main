@@ -19,8 +19,8 @@
 <!--        <button @click="aab4($event, $dom, 1)">测试</button>-->
 <!--        <a :href="href">{{ccbbc.aa}}</a>-->
 <!--        <router-view id="view"></router-view>-->
-<!--        <img src="~at/img/1.jpg"/>-->
-        <swiper a-b="121" :t-s="img"  :ccb="ccbbc"  :time-str="img" @click="aab" :img="img" :imgs="imgs"></swiper>
+<!--        <img ref="aa" src="~at/img/1.jpg"/>-->
+        <swiper ref="aa" a-b="121" :t-s="img"  :ccb="ccbbc"  :time-str="img" @click="aab" :img="img" :imgs="imgs"></swiper>
     </div>
 <script src="js/main.js"></script>
 <script>
@@ -78,6 +78,7 @@
             setTimeout(() =>{
                 this.href = '~input/img/2.jpg'
             }, 3000)
+            console.log(this.$refs.aa);
         },
         methods: {
             aab: function () {

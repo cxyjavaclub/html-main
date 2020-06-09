@@ -3534,19 +3534,21 @@
     Main.input = function (href) {
         let output;
         let jsStr = Main.load(href);
-        jsStr = Main.inputJs(jsStr);
 
         let type = Main.getType(href);
         if (type === 'html' || type === 'main') {
             let div = document.createElement('div');
             div.innerHTML = jsStr;
             let templateText = div.getElementsByTagName('template')[0].innerHTML;
+
             //获取js数据
             let jsText = div.getElementsByTagName('script')[0].innerHTML;
 
             //解析style
             let style = div.getElementsByTagName('style')[0];
             let styleText = style.innerHTML;
+
+            jsText = Main.inputJs(jsText);
 
             output = (new Function('let output = {};' + jsText + 'return output;'))();
             output.template = templateText;
@@ -3555,6 +3557,7 @@
                 value: styleText
             }
         } else {
+            jsStr = Main.inputJs(jsStr);
             output = (new Function('let output = {};' + jsStr + ';return output;'))();
         }
         return output;
