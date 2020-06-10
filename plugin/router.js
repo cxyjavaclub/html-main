@@ -257,6 +257,12 @@ router.prototype.go = function (i) {
     }
 };
 
+//设置默认路径
+router.prototype.default = function(path){
+    console.log(path)
+    this.defaultPath = path;
+}
+
 //添加引入组件执行函数
 router.prototype.install  = function (main) {
 
@@ -302,7 +308,21 @@ router.prototype.install  = function (main) {
         main.addComponentAddDomLoad(function (com) {
             if (com.token && com.token === that.token) {
                 that.elDom = com.elDom;
-                that.selectIndex(0);
+                if(that.defaultPath){
+                    let index = 0;
+                    if(that.defaultPath.constructor === String){
+                        index = that.findByPathIndex(that.defaultPath);
+                    }else if(that.defaultPath.constructor === Number && that.defaultPath >= 0 && that.defaultPath < that.routes.length){
+                        index = that.defaultPath;
+                    }
+                    if(index){
+                        that.selectIndex(index);
+                    }else{
+                        that.selectIndex(0);
+                    }
+                }else {
+                    that.selectIndex(0);
+                }
             }
         });
     }else{
