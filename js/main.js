@@ -39,6 +39,8 @@
     (function () {
         //全局组件存储
         Main.globalComponents = [];
+        //组件被创造完成运行
+        Main.componentCreatedLoadRuns = [];
         //组件加载完成运行
         Main.componentLoadRuns = [];
         //组件原型解析完成运行
@@ -91,6 +93,14 @@
             return globalContainer[name];
         }
         return null;
+    }
+
+    /**
+     * 组件被创造完成运行
+     * @param fun
+     */
+    Main.addComponentCreatedLoadRuns = function (fun) {
+        Main.componentCreatedLoadRuns.push(fun);
     }
 
     /**
@@ -616,6 +626,9 @@
              * 组件解析之前完成
              */
             componentParseFront: function (comObj) {
+                for (const p of Main.componentCreatedLoadRuns) {
+                    p(comObj);
+                }
                 if (comObj.created) {
                     comObj.created();
                 }
@@ -797,10 +810,7 @@
                         let com = this.getFindNameComponent(comObj, name);
                         //获取到组件
                         if (com) {
-                            //解析组件并替换
-                            let newCom = this.parseComponent(com, dom, comObj);
-                            this.runFunction(funCom, newCom);
-                            this.componentAddDomLoad(newCom);
+                            this.completeParseComponent(com, dom, comObj, funCom);
                         } else {
                             //框架解析普通标签之前运行
                             this.parseOrdinaryLabelBefore(dom, comObj);
@@ -836,6 +846,21 @@
                     }
                 }
                 return com;
+            },
+
+            /**
+             * 完整解析组件，与parseComponent的区别是这个添加到了dom元素里
+             * @param com
+             * @param dom
+             * @param comObj
+             * @param funCom
+             */
+            completeParseComponent: function (com, dom, comObj, funCom) {
+                //解析组件并替换
+                let newCom = this.parseComponent(com, dom, comObj);
+                this.runFunction(funCom, newCom);
+                this.componentAddDomLoad(newCom);
+                return newCom;
             },
 
             /**
@@ -2162,19 +2187,23 @@
              * @param obj
              * @param name
              * @param value
+             * @param noFlag
              */
-            dataHijack: function (obj, name, value) {
-                this.observe(value);
+            dataHijack: function (obj, name, value, noFlag) {
+                if(!noFlag) {
+                    this.observe(value);
+                }
                 let dep = new Main.Dep();
                 let that = this;
                 Object.defineProperty(obj, name, {
+                    enumerable: true,
                     configurable: true,
                     get: function () {
                         that.depIndirectDispose(dep, obj, name);
                         return value;
                     },
                     set: function (v) {
-                        // console.log('值发生改变' + value + "----->" + v);
+                        // console.log(name + '值发生改变' + value + "----->" + v);
                         value = v;
                         dep.runAll();
                     }

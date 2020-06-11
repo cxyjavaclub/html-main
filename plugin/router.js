@@ -102,8 +102,6 @@ router.prototype.routeInit = function(){
                 if(com){
                     if(com.constructor === Object) {
                         this.main.MainTool.methods.initComponent(com.name || 'router', com);
-                        //向组件原型添加路由对象
-                        com.$router = this;
                     }
                 }else{
                     let redirect = route.redirect;
@@ -180,6 +178,7 @@ router.prototype.hideShowRouter = function () {
  */
 router.prototype.selectIndex = function(i, query, historyFlag){
     if(this.routes.length > 0 && this.elDom && i >= 0 && i < this.routes.length){
+        let that =this;
         let route = this.routes[i];
         let comPrototype = this.routes[i].component;
         this.hideShowRouter();
@@ -192,19 +191,19 @@ router.prototype.selectIndex = function(i, query, historyFlag){
         if(comPrototype.constructor === String){
             let c = this.main.input(comPrototype);
             this.main.MainTool.methods.initComponent(c.name || 'router', c);
-            //向组件原型添加路由对象
-            c.$router = this;
             this.routes[i].component = comPrototype = c;
         }
         //解析组件
-        let com = this.main.MainTool.methods.parseComponent(comPrototype);
+        let com = this.main.MainTool.methods.completeParseComponent(comPrototype, null, null, function (com) {
+            //路由添加视图
+            that.main.MainTool.methods.insertAfter(com.elDom, that.elDom);
+        });
 
-        //路由添加视图
-        this.main.MainTool.methods.insertAfter(com.elDom, this.elDom);
         //路由添加视图样式
         let styleLabelObj = this.main.MainTool.methods.addStyleToHead(com.style.value);
         //添加视图样式标签对象
         com.style.obj = styleLabelObj;
+
         //调用路由生命周期活化事件
         if(com.activated){
             com.activated();
@@ -299,6 +298,9 @@ router.prototype.install  = function (main) {
     //检测路由表
     if(this.routes.length > 0) {
 
+        //增加双向绑定数据
+        main.MainTool.methods.dataHijack(this, 'path', this.path);
+
         //插件令牌（用于判别组件）
         this.token = 'router-token-' + main.MainTool.methods.getUUid(16);
 
@@ -316,21 +318,21 @@ router.prototype.install  = function (main) {
             template: `<a><slot></slot></a>`,
         });
 
-        //增加加载组件原型完成运行函数
-        main.addComponentPrototypeLoadRuns(function (comPrototype) {
-            if(comPrototype.token !== that.token) {
-                if (!comPrototype.$router) {
-                    comPrototype.$router = that;
+        //增加组件被创造完成运行
+        main.addComponentCreatedLoadRuns(function (com) {
+            if(com.token !== that.token) {
+                if (!com.$router) {
+                    main.MainTool.methods.dataHijack(com, '$router', that, true);
                 } else {
                     //防止一个路由重复添加
-                    if (comPrototype.$router !== that) {
-                        if (comPrototype.$router.constructor === Array) {
-                            comPrototype.$router.push(that);
+                    if (com.$router !== that) {
+                        if (com.$router.constructor === Array) {
+                            com.$router.push(that);
                         } else {
-                            let t = comPrototype.$router;
-                            comPrototype.$router = [];
-                            comPrototype.$router.push(t);
-                            comPrototype.$router.push(that);
+                            let t = com.$router;
+                            com.$router = [];
+                            com.$router.push(t);
+                            com.$router.push(that);
                         }
                     }
                 }
