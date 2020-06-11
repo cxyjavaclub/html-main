@@ -616,6 +616,7 @@
                     p(comObjPrototype);
                 }
             },
+
             /**
              * 组件加载完成
              * @param comObj
@@ -625,8 +626,8 @@
                 for (const p of Main.componentLoadRuns) {
                     p(comObj);
                 }
-                if (comObj.mounted) {
-                    comObj.mounted();
+                if (comObj.beforeMount) {
+                    comObj.beforeMount();
                 }
             },
 
@@ -639,6 +640,9 @@
                 //运行组件加载完成运行函数
                 for (const p of Main.componentAddDomLoadRuns) {
                     p(comObj);
+                }
+                if (comObj.mounted) {
+                    comObj.mounted();
                 }
                 comObj.$root = Main.$root;
             },
