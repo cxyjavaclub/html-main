@@ -12,6 +12,10 @@
 <body>
 
     <div id="app">
+        <router-link href="http://www.baidu.com">
+            <h1>我是链接</h1>
+        </router-link>
+        <a :m-link="img">我是a</a>
         <button @click="aab">单击</button>
 <!--        <button @click="aab1">上</button>-->
 <!--        <button @click="aab2">下</button>-->
@@ -79,6 +83,7 @@
                 this.href = '~input/img/2.jpg'
             }, 3000)
             console.log(this.$refs.aa);
+            console.log(this.$router)
         },
         methods: {
             aab: function () {

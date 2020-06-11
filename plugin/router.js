@@ -155,16 +155,20 @@ router.prototype.findByPathIndex = function(path){
 //隐藏显示路由
 router.prototype.hideShowRouter = function () {
     if(this.showRouter){
-        let s = this.showRouter;
-        this.main.MainTool.methods.removeLabelElement(s.componentObj.elDom);
-        this.main.MainTool.methods.removeLabelElement(s.componentObj.style.obj);
-        //调用路由生命周期停用事件
-        if(s.componentObj.deactivated){
-            s.componentObj.deactivated();
+        try {
+            let s = this.showRouter;
+            this.main.MainTool.methods.removeLabelElement(s.componentObj.elDom);
+            this.main.MainTool.methods.removeLabelElement(s.componentObj.style.obj);
+            //调用路由生命周期停用事件
+            if (s.componentObj.deactivated) {
+                s.componentObj.deactivated();
+            }
+            delete s.componentObj;
+            //清除本次路由携带的参数
+            this.query = null;
+        }catch (e) {
+            console.error("隐藏路由错误：==>", e);
         }
-        delete s.componentObj;
-        //清除本次路由携带的参数
-        this.query = null;
     }
 };
 
@@ -172,9 +176,9 @@ router.prototype.hideShowRouter = function () {
  * 通过下标选择路由
  * @param i 下标
  * @param query 携带参数
- * @param refreshFlag 刷新标志
+ * @param historyFlag 历史标志
  */
-router.prototype.selectIndex = function(i, query, refreshFlag){
+router.prototype.selectIndex = function(i, query, historyFlag){
     if(this.routes.length > 0 && this.elDom && i >= 0 && i < this.routes.length){
         let route = this.routes[i];
         let comPrototype = this.routes[i].component;
@@ -201,11 +205,15 @@ router.prototype.selectIndex = function(i, query, refreshFlag){
         let styleLabelObj = this.main.MainTool.methods.addStyleToHead(com.style.value);
         //添加视图样式标签对象
         com.style.obj = styleLabelObj;
+        //调用路由生命周期活化事件
+        if(com.activated){
+            com.activated();
+        }
         route.componentObj = com;
         this.showRouter = route;
         this.index = i;
         this.path = route.path;
-        if(!refreshFlag) {
+        if(historyFlag) {
             //设置路径
             this.pushState({com: com, query: this.query, index: i, path: route.path}, route.path);
         }
@@ -217,13 +225,27 @@ router.prototype.selectIndex = function(i, query, refreshFlag){
 }
 
 
-//通过路径路由
+//通过路径路由 有历史记录
 router.prototype.goPath = function (obj){
+    this.routerPath(obj, true);
+}
+
+//替换路由，没有历史记录
+router.prototype.replace = function(obj){
+    this.routerPath(obj, false);
+}
+
+/**
+ * 路由路径
+ * @param obj
+ * @param historyFlag
+ */
+router.prototype.routerPath = function(obj, historyFlag){
     if(obj.constructor === String){
-        this.selectIndex(this.findByPathIndex(obj));
+        this.selectIndex(this.findByPathIndex(obj), null, historyFlag);
     }else if(obj.constructor === Object){
         if(obj.path){
-            this.selectIndex(this.findByPathIndex(obj.path), obj.query);
+            this.selectIndex(this.findByPathIndex(obj.path), obj.query, historyFlag);
         }else{
             console.error('没有路由路径');
         }
@@ -233,7 +255,7 @@ router.prototype.goPath = function (obj){
 
 //刷新路由
 router.prototype.refresh = function () {
-    this.selectIndex(this.index, null, true);
+    this.selectIndex(this.index, this.query, false);
 };
 
 //路由移动到上一个网址，等同于点击浏览器的后退键。对于第一个访问的网址，该方法无效果。
@@ -282,6 +304,17 @@ router.prototype.install  = function (main) {
 
         //增加组件
         main.component(this.name, {token: this.token, template: this.template});
+        //添加链接组件
+        main.component('router-link', {
+            style:{
+                value: `a{
+                        text-decoration: none;
+                        color: #232323;
+                        }`,
+                scoped: true
+            },
+            template: `<a><slot></slot></a>`,
+        });
 
         //增加加载组件原型完成运行函数
         main.addComponentPrototypeLoadRuns(function (comPrototype) {
@@ -316,18 +349,56 @@ router.prototype.install  = function (main) {
                         index = that.defaultPath;
                     }
                     if(index){
-                        that.selectIndex(index);
-                    }else{
-                        that.selectIndex(0);
+                        that.selectIndex(index, null, true);
+                        return;
                     }
                 }else {
-                    that.selectIndex(0);
+                    if(main.projectName){
+                        let arr = split(main.projectName, '/');
+                        if(arr.length > 0){
+                            let index = that.findByPathIndex('/' + arr[0]);
+                            if(index){
+                                that.selectIndex(index, null, true);
+                                return;
+                            }
+                        }
+                    }
                 }
+                that.selectIndex(0, null, true);
             }
         });
+
+        //框架解析普通标签完成运行，增加解析a的m-link属性
+        main.addParseOrdinaryLabelLoadRuns(function (dom) {
+            if(dom){
+                let name = dom.tagName.toLocaleLowerCase();
+                //解析a标签m-link属性
+                if(name === 'a'){
+                    let link = dom.getAttribute('m-link');
+                    if(link){
+                        dom.setAttribute('href', link);
+                        dom.removeAttribute('m-link');
+                    }
+                }
+            }
+
+        });
+
     }else{
         console.error('路由表为空，路由插件添加失败');
     }
+}
+
+function split(str, re){
+    let arr = []
+    if(str) {
+        for (let s of str.split(re)) {
+            if (s) {
+                arr.push(s)
+            }
+        }
+    }
+    return arr;
 }
 output = router;
 
