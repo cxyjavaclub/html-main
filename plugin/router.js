@@ -355,8 +355,8 @@ router.prototype.install  = function (main) {
                         return;
                     }
                 }else {
-                    if(main.projectName){
-                        let arr = split(main.projectName, '/');
+                    if(main.pathName){
+                        let arr = split(main.pathName, '/');
                         if(arr.length > 0){
                             let index = that.findByPathIndex('/' + arr[0]);
                             if(index){

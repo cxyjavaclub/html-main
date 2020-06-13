@@ -20,15 +20,12 @@
 
     //获取项目地址
     (function() {
-        //获取当前网址，如： http://localhost:63342/swiper/html/index.html
-        let curWwwPath = window.document.location.href;
         //获取主机地址之后的目录，如： swiper/html/index.html
-        let pathName = window.document.location.pathname;
-        let pos = curWwwPath.indexOf(pathName);
+        Main.pathName = window.document.location.pathname;
         //获取主机地址，如： http://localhost:63342
-        Main.localhostPath = curWwwPath.substring(0, pos);
+        Main.localhostPath = window.document.location.protocol + '//' + window.document.location.host;
         //获取带"/"的项目名，如：/swiper/html
-        Main.projectName = pathName.substring(0, pathName.substr(1).lastIndexOf('/') + 1);
+        Main.projectName = Main.pathName.substring(0, Main.pathName.substr(1).lastIndexOf('/') + 1);
         //写入项目地址
         Main.projectPath = Main.localhostPath + Main.projectName;
     })();
