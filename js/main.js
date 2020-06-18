@@ -1081,7 +1081,11 @@
              */
             parseComponentText: function (dom, comObj) {
                 let child = dom.childNodes;
-                for (let c of child) {
+                let arr = [];
+                for(let c of child){
+                    arr.push(c);
+                }
+                for (let c of arr) {
                     if (c.nodeName === '#text') {
                         let reg = /\{\{([^\}]*)\}\}/g;
                         let execs = [];
@@ -1089,18 +1093,30 @@
                         while (exec = reg.exec(c.textContent)) {
                             execs.push(exec);
                         }
+                        let startIndex = 0;
+                        let text = c.textContent;
+                        c.textContent = "";
+                        let replaceText = c;
                         for (let e of execs) {
                             if (e && e[1]) {
+                                if(e.index != startIndex){
+                                    let s = text.substring(startIndex, e.index);
+                                    let node = this.createTextNode(s);
+                                    this.insertAfter(node, replaceText);
+                                    replaceText = node;
+                                }
                                 //解析框架字符串{{}}
                                 let runValue = this.parseFrameString(comObj, e[1]);
-                                let text = c.textContent;
+                                let node = this.createTextNode(runValue);
+                                this.insertAfter(node, replaceText);
+                                replaceText = node;
+                                startIndex = e.index + e[0].length;
                                 let that = this;
                                 this.depNamesDispose(function (object, key, parameterObj) {
                                     new Main.Subscriber(object, key, function () {
-                                        c.textContent = text.replace(e[0], that.parseFrameString(parameterObj, e[1]));
+                                        node.textContent = that.parseFrameString(parameterObj, e[1]);
                                     })
                                 }, comObj.parseAddObjData);
-                                c.textContent = text.replace(e[0], runValue);
                             }
                         }
                     }
@@ -2485,6 +2501,11 @@
             createLabel: function (name) {
                 return document.createElement(name);
             },
+            //生成文本Node
+            createTextNode: function(str){
+                return document.createTextNode(str);
+            },
+
             //引入组件样式
             importComponentStyle: function (newCom, com) {
                 if (newCom && com && com.style) {

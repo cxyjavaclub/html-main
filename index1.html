@@ -12,26 +12,27 @@
 <body>
 
     <div id="app">
-        <router-link href="http://www.baidu.com">
-            <h1>我是链接</h1>
-        </router-link>
-        <a :m-link="img">我是a</a>
-        <button @click="aab">单击</button>
-        <div m-for="v in arr">
-            {{v}}
-            <p m-for="v in v">
-                {{v}}
-            </p>
-        </div>
+        <p>{{aa}} {{aa}}{{flag}}</p>
+<!--        <router-link href="http://www.baidu.com">-->
+<!--            <h1>我是链接</h1>-->
+<!--        </router-link>-->
+<!--        <a :m-link="img">我是a</a>-->
+<!--        <button @click="aab">单击</button>-->
+<!--        <div m-for="v in arr">-->
+<!--            {{v}}-->
+<!--            <p m-for="v in v">-->
+<!--                {{v}}-->
+<!--            </p>-->
+<!--        </div>-->
 
 <!--        <button @click="aab1">上</button>-->
 <!--        <button @click="aab2">下</button>-->
 <!--        <button :aa="href" @click="aab3">跳</button>-->
 <!--        <button @click="aab4($event, $dom, 1)">测试</button>-->
 <!--        <a :href="href">{{ccbbc.aa}}</a>-->
-        <router-view id="view"></router-view>
+<!--        <router-view id="view"></router-view>-->
 <!--        <img ref="aa" src="~at/img/1.jpg"/>-->
-        <swiper ref="aa" a-b="121" :t-s="img"  :ccb="ccbbc"  :time-str="img" @click="aab" :img="img" :imgs="imgs"></swiper>
+<!--        <swiper ref="aa" a-b="121" :t-s="img"  :ccb="ccbbc"  :time-str="img" @click="aab" :img="img" :imgs="imgs"></swiper>-->
     </div>
 <script src="js/main.js"></script>
 <script>
