@@ -963,6 +963,7 @@
 
                 //解析组件子标签的m-if m-elif m-else
                 let ifArr = this.parseComponentChildLabelMIF(dom, comObj);
+
                 //解析组件dom的子dom
                 this.parseComponentDomChild(dom, comObj, ifArr);
             },
@@ -1059,9 +1060,6 @@
                     if(this.parseOrdinaryAttr(a, dom, comObj)){
                         dom.setAttribute(a.name, a.value);
                     }else {
-                        //解析ref
-                        this.parseComponentRef(a, dom, comObj);
-
                         //解析m-attr
                         this.parseComponentMAttr(a, dom, comObj);
 
@@ -1070,6 +1068,9 @@
 
                         //解析组件m-text
                         this.parseComponentMText(a, dom, comObj);
+
+                        //解析ref
+                        this.parseComponentRef(a, dom, comObj);
                     }
                 }
             },
@@ -1135,9 +1136,6 @@
                     //属性加工
                     let attrs = this.attrProcessingPlant(labelDom, 1);
                     for (let a of attrs) {
-                        //解析组件标签ref
-                        this.parseComponentLabelRef(a, childComObj, comObj);
-
                         //解析组件标签常规属性
                         this.parseComponentLabelRoutine(a, childComObj);
 
@@ -1146,6 +1144,9 @@
 
                         //解析组件标签m-js
                         this.parseComponentLabelMJs(a, comObj, childComObj);
+
+                        //解析组件标签ref
+                        this.parseComponentLabelRef(a, childComObj, comObj);
                     }
                 }
             },
@@ -2608,7 +2609,10 @@
              */
             parseComponentRef: function (attr, dom, comObj) {
                 let name = attr.name;
-                if (name === 'ref') {
+                if (name === 'ref' || name === 'm-attr:ref') {
+                    if(name === 'm-attr:ref'){
+                        attr.value = dom.getAttribute('ref');
+                    }
                     //添加refs属性
                     let refs = comObj.$refs[attr.value];
                     if (refs) {
