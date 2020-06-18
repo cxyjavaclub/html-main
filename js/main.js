@@ -1095,8 +1095,10 @@
                         }
                         let startIndex = 0;
                         let text = c.textContent;
-                        c.textContent = "";
                         let replaceText = c;
+                        if(execs.length > 0){
+                            c.textContent = "";
+                        }
                         for (let e of execs) {
                             if (e && e[1]) {
                                 if(e.index != startIndex){
