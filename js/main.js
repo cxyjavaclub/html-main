@@ -2630,8 +2630,10 @@
                         }
                     }
                     //删除dom属性
-                    if (dom.constructor === HTMLHeadingElement) {
+                    try {
                         dom.removeAttribute('ref');
+                    }catch(e) {
+                        console.log(e);
                     }
                 }
             },
