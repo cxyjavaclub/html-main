@@ -2635,7 +2635,9 @@
                     }
                     //删除dom属性
                     try {
-                        dom.removeAttribute('ref');
+                        if(dom.constructor != Object) {
+                            dom.removeAttribute('ref');
+                        }
                     }catch(e) {
                         console.log(e);
                     }
